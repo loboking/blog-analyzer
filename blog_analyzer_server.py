@@ -708,11 +708,11 @@ class NaverBlogCrawler:
             print(f"Search check error: {e}")
             return 'unknown', ''
 
-    def _get_posts_with_index(self, blog_id, posts, max_posts=30):
+    def _get_posts_with_index(self, blog_id, posts, max_posts=5):
         """포스팅 목록에 지수 정보 추가 (병렬 처리) - 개선된 버전"""
         enriched_posts = []
 
-        # 최대 30개 상세 분석
+        # 최대 5개 상세 분석 (메모리 최적화)
         posts_to_analyze = posts[:max_posts]
 
         def analyze_post(post):
