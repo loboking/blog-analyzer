@@ -3310,9 +3310,131 @@ def index():
                 font-size: 16px;
             }
         }
+
+        /* ===== 카카오 애드핏 광고 스타일 ===== */
+
+        /* 사이드바 광고 (160x600) - PC에서만 표시 */
+        .ad-sidebar {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .ad-sidebar-left {
+            left: 20px;
+        }
+
+        .ad-sidebar-right {
+            right: 20px;
+        }
+
+        .ad-sidebar-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .ad-sidebar-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        /* 콘텐츠 내 광고 (250x250, 300x250) */
+        .ad-content-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 24px 0;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ad-content-container {
+            text-align: center;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.25);
+            margin-bottom: 8px;
+        }
+
+        /* 푸터 광고 */
+        .ad-footer-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 32px 0 24px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* 결과 영역 사이 광고 */
+        .ad-between-sections {
+            margin: 20px 0;
+        }
+
+        /* 반응형: 모바일에서 사이드바 광고 숨김 */
+        @media (max-width: 1400px) {
+            .ad-sidebar {
+                display: none;
+            }
+        }
+
+        /* 반응형: 태블릿/모바일에서 일부 광고 숨김 */
+        @media (max-width: 768px) {
+            .ad-content-wrapper.hide-mobile {
+                display: none;
+            }
+
+            .ad-between-sections {
+                margin: 16px 0;
+            }
+        }
+
+        /* 컨테이너 최대 너비 조정 (사이드바 광고 공간 확보) */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1000px;
+            }
+        }
+
+        /* 라이트 모드 광고 스타일 */
+        .light-mode .ad-sidebar-container,
+        .light-mode .ad-content-wrapper,
+        .light-mode .ad-footer-wrapper {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .light-mode .ad-sidebar-label,
+        .light-mode .ad-label {
+            color: rgba(0, 0, 0, 0.3);
+        }
     </style>
+
+    <!-- 카카오 애드핏 스크립트 (한 번만 로드) -->
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </head>
 <body>
+    <!-- 사이드바 광고 (160x600) - PC에서만 표시 -->
+    <div class="ad-sidebar ad-sidebar-right">
+        <div class="ad-sidebar-container">
+            <div class="ad-sidebar-label">광고</div>
+            <ins class="kakao_ad_area" style="display:none;"
+            data-ad-unit = "DAN-qL9yUvEpDkygjMA5"
+            data-ad-width = "160"
+            data-ad-height = "600"></ins>
+        </div>
+    </div>
+
     <!-- 테마 토글 버튼 -->
     <button class="theme-toggle" onclick="toggleTheme()" title="다크/라이트 모드 전환">🌙</button>
 
@@ -3367,6 +3489,17 @@ def index():
             </div>
         </div>
 
+        <!-- 메인 페이지 광고 (250x250) -->
+        <div class="ad-content-wrapper hide-mobile" id="adMainSection">
+            <div class="ad-content-container">
+                <div class="ad-label">광고</div>
+                <ins class="kakao_ad_area" style="display:none;"
+                data-ad-unit = "DAN-swwvk4Kp8cMpG1FI"
+                data-ad-width = "250"
+                data-ad-height = "250"></ins>
+            </div>
+        </div>
+
         <!-- 검색 히스토리 섹션 -->
         <div id="historySection" class="history-section" style="display: none;">
             <div class="history-header">
@@ -3381,6 +3514,17 @@ def index():
         </div>
 
         <div id="result"></div>
+
+        <!-- 푸터 광고 (300x250) -->
+        <div class="ad-footer-wrapper">
+            <div class="ad-content-container">
+                <div class="ad-label">광고</div>
+                <ins class="kakao_ad_area" style="display:none;"
+                data-ad-unit = "DAN-qYU1Nbac9rUaGFpF"
+                data-ad-width = "300"
+                data-ad-height = "250"></ins>
+            </div>
+        </div>
 
         <!-- 푸터 -->
         <footer class="footer">
@@ -5114,6 +5258,17 @@ def index():
                         </div>
                     </div>
 
+                    <!-- 결과 중간 광고 (300x250) -->
+                    <div class="ad-content-wrapper ad-between-sections">
+                        <div class="ad-content-container">
+                            <div class="ad-label">광고</div>
+                            <ins class="kakao_ad_area" style="display:none;"
+                            data-ad-unit = "DAN-qYU1Nbac9rUaGFpF"
+                            data-ad-width = "300"
+                            data-ad-height = "250"></ins>
+                        </div>
+                    </div>
+
                     <!-- 포스팅 지수 테이블 -->
                     ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
                     <!-- 형태소 분석 섹션 -->
@@ -5204,6 +5359,17 @@ def index():
                         지수는 공개된 데이터를 기반으로 자체 알고리즘으로 계산한 값입니다.
                     </div>
 
+                    <!-- 결과 하단 광고 (250x250) -->
+                    <div class="ad-content-wrapper hide-mobile ad-between-sections">
+                        <div class="ad-content-container">
+                            <div class="ad-label">광고</div>
+                            <ins class="kakao_ad_area" style="display:none;"
+                            data-ad-unit = "DAN-swwvk4Kp8cMpG1FI"
+                            data-ad-width = "250"
+                            data-ad-height = "250"></ins>
+                        </div>
+                    </div>
+
                     <!-- PDF 다운로드 버튼 -->
                     <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <button class="pdf-download-btn" onclick="downloadPDF()" style="margin: 0 auto;">
@@ -5229,6 +5395,15 @@ def index():
 
             // 차트 렌더링
             setTimeout(() => renderCharts(data), 100);
+
+            // 카카오 애드핏 광고 재렌더링 (동적 콘텐츠용)
+            setTimeout(() => {
+                if (typeof kakaoAdFit !== 'undefined' && kakaoAdFit.render) {
+                    kakaoAdFit.render();
+                } else if (typeof adfit !== 'undefined' && adfit.render) {
+                    adfit.render();
+                }
+            }, 200);
         }
 
         // 포스팅 상세 분석 모달 함수
