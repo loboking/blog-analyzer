@@ -3,7 +3,7 @@ services:
     name: blog-analyzer
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn blog_analyzer_server:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn blog_analyzer_server:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
