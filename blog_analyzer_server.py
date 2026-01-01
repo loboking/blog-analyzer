@@ -763,8 +763,8 @@ class NaverBlogCrawler:
                 print(f"Individual post analysis error for {post_url}: {e}")
                 return default_result
 
-        # 병렬 처리 (최대 5개 동시 - 속도 최적화)
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        # 병렬 처리 (최대 2개 동시 - 메모리 최적화)
+        with ThreadPoolExecutor(max_workers=2) as executor:
             futures = {executor.submit(analyze_post, post): post for post in posts_to_analyze}
             for future in as_completed(futures):
                 try:
