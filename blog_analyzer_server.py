@@ -73,10 +73,10 @@ class NaverBlogCrawler:
             # 6. 지수 계산 (주간 평균 사용)
             result['index'] = self._calculate_index(result, weekly_avg=weekly_avg, weekly_count=weekly_count)
 
-            # 7. 포스팅 지수 정보 (최근 30개)
+            # 7. 포스팅 지수 정보 (최근 5개 - 속도 최적화)
             if result.get('recent_posts'):
                 result['posts_with_index'] = self._get_posts_with_index(
-                    blog_id, result['recent_posts'], max_posts=30
+                    blog_id, result['recent_posts'], max_posts=5
                 )
 
         except Exception as e:
