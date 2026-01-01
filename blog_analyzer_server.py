@@ -5342,7 +5342,7 @@ def index():
                                             '<td style="text-align: center;">' + (post.comments || 0) + '</td>' +
                                             '<td style="text-align: center;">' + (post.likes || 0) + '</td>' +
                                             '<td style="text-align: center;">' + (post.images || 0) + '</td>' +
-                                            '<td style="text-align: left;">' + keywordsHtml + '</td>' +
+                                            '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
                                             '<td><a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(post.keyword || '') + '" target="_blank" class="keyword-link" title="이 키워드로 검색">' + (post.keyword || '-') + ' 🔍</a></td>' +
                                             '<td>' + getExposureBadge(post.exposure) + '</td>' +
                                             '<td><button class="analyze-btn" onclick=\\'showPostAnalysis(' + JSON.stringify(post).replace(/'/g, "&#39;").replace(/\\\\/g, "\\\\\\\\") + ')\\'>🔍 상세</button></td>' +
