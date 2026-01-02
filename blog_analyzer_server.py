@@ -1802,6 +1802,242 @@ def like_community_post(post_id):
 
 
 # =====================================================
+# 법적 페이지 (개인정보처리방침, 이용약관, 면책조항)
+# =====================================================
+def get_legal_page_template(title, content):
+    """법적 페이지 공통 템플릿"""
+    return f'''<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} - 블로그 지수 분석기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.8;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }}
+        .back-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }}
+        .back-btn:hover {{ text-decoration: underline; }}
+        h1 {{
+            font-size: 28px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+        h2 {{
+            font-size: 18px;
+            margin: 30px 0 15px;
+            color: #667eea;
+        }}
+        p, li {{
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 12px;
+        }}
+        ul {{
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }}
+        .update-date {{
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 30px;
+        }}
+        .section {{
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← 메인으로 돌아가기</a>
+        <h1>{title}</h1>
+        <p class="update-date">최종 업데이트: 2025년 1월</p>
+        {content}
+    </div>
+</body>
+</html>'''
+
+@app.route('/privacy')
+def privacy_page():
+    """개인정보처리방침 페이지"""
+    content = '''
+        <div class="section">
+            <h2>1. 개인정보 수집 항목</h2>
+            <p>본 서비스는 별도의 회원가입 없이 이용 가능하며, <strong>개인정보를 수집하지 않습니다.</strong></p>
+            <ul>
+                <li>블로그 아이디: 분석 목적으로만 사용되며, 서버에 저장되지 않습니다.</li>
+                <li>분석 기록: 사용자의 브라우저(LocalStorage)에만 저장됩니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>2. 쿠키 및 분석 도구</h2>
+            <p>본 서비스는 다음과 같은 목적으로 쿠키를 사용할 수 있습니다:</p>
+            <ul>
+                <li>테마 설정 저장 (다크모드/라이트모드)</li>
+                <li>광고 서비스 제공 (카카오 애드핏)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>3. 제3자 서비스</h2>
+            <p>본 서비스는 다음의 제3자 서비스를 이용합니다:</p>
+            <ul>
+                <li><strong>카카오 애드핏:</strong> 광고 제공 목적</li>
+                <li><strong>Google Fonts:</strong> 웹폰트 제공</li>
+            </ul>
+            <p>각 서비스의 개인정보 처리에 대해서는 해당 서비스의 개인정보처리방침을 참조하시기 바랍니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>4. 데이터 보관</h2>
+            <p>본 서비스는 사용자 데이터를 서버에 저장하지 않습니다. 모든 분석은 실시간으로 처리되며, 결과는 사용자의 브라우저에만 임시 저장됩니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>5. 문의</h2>
+            <p>개인정보 관련 문의사항이 있으시면 서비스 내 커뮤니티를 통해 문의해 주시기 바랍니다.</p>
+        </div>
+    '''
+    return get_legal_page_template('개인정보처리방침', content)
+
+@app.route('/terms')
+def terms_page():
+    """이용약관 페이지"""
+    content = '''
+        <div class="section">
+            <h2>제1조 (목적)</h2>
+            <p>본 약관은 블로그 지수 분석기(이하 "서비스")의 이용과 관련하여 서비스 제공자와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>제2조 (서비스의 내용)</h2>
+            <p>본 서비스는 다음과 같은 기능을 제공합니다:</p>
+            <ul>
+                <li>네이버 블로그 분석 및 지수 산출</li>
+                <li>포스팅 진단 및 최적화 조언</li>
+                <li>트렌드 키워드 정보 제공</li>
+                <li>블로거 커뮤니티</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>제3조 (서비스 이용)</h2>
+            <ul>
+                <li>본 서비스는 무료로 제공됩니다.</li>
+                <li>별도의 회원가입 없이 이용 가능합니다.</li>
+                <li>서비스 이용 시 관련 법령을 준수해야 합니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>제4조 (금지행위)</h2>
+            <p>이용자는 다음 행위를 해서는 안 됩니다:</p>
+            <ul>
+                <li>서비스의 안정적 운영을 방해하는 행위</li>
+                <li>자동화된 수단을 이용한 과도한 요청</li>
+                <li>타인의 블로그를 악의적 목적으로 분석하는 행위</li>
+                <li>서비스를 이용한 불법적 활동</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>제5조 (면책)</h2>
+            <ul>
+                <li>본 서비스는 참고용 정보를 제공하며, 정확성을 보장하지 않습니다.</li>
+                <li>분석 결과를 바탕으로 한 의사결정의 책임은 이용자에게 있습니다.</li>
+                <li>서비스 장애, 데이터 손실 등에 대해 책임지지 않습니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>제6조 (서비스 변경 및 중단)</h2>
+            <p>서비스 제공자는 필요한 경우 서비스의 내용을 변경하거나 중단할 수 있으며, 이에 대해 별도의 보상을 하지 않습니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>제7조 (약관의 변경)</h2>
+            <p>본 약관은 필요에 따라 변경될 수 있으며, 변경된 약관은 서비스 내 공지를 통해 효력이 발생합니다.</p>
+        </div>
+    '''
+    return get_legal_page_template('이용약관', content)
+
+@app.route('/disclaimer')
+def disclaimer_page():
+    """면책조항 페이지"""
+    content = '''
+        <div class="section">
+            <h2>서비스 성격</h2>
+            <p>블로그 지수 분석기는 네이버 블로그의 공개된 정보를 수집·분석하여 <strong>참고용 지표</strong>를 제공하는 서비스입니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>데이터 정확성</h2>
+            <ul>
+                <li>본 서비스에서 제공하는 모든 지수, 점수, 분석 결과는 자체 알고리즘에 의한 <strong>추정치</strong>입니다.</li>
+                <li>네이버의 공식 지수나 통계가 아니며, 네이버와 무관한 독립 서비스입니다.</li>
+                <li>실제 블로그 성과와 차이가 있을 수 있습니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>책임 제한</h2>
+            <ul>
+                <li>분석 결과를 바탕으로 한 모든 의사결정의 책임은 이용자 본인에게 있습니다.</li>
+                <li>서비스 이용으로 인한 직·간접적 손해에 대해 책임지지 않습니다.</li>
+                <li>제3자 서비스(네이버, 카카오 등)의 정책 변경으로 인한 서비스 오류에 대해 책임지지 않습니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>데이터 출처</h2>
+            <ul>
+                <li>블로그 정보: 네이버 블로그 RSS 피드 및 공개 페이지</li>
+                <li>트렌드 키워드: Google Trends 및 자체 데이터</li>
+            </ul>
+            <p>모든 데이터는 공개적으로 접근 가능한 정보만을 수집합니다.</p>
+        </div>
+
+        <div class="section">
+            <h2>서비스 가용성</h2>
+            <ul>
+                <li>서비스는 사전 고지 없이 변경, 중단될 수 있습니다.</li>
+                <li>서버 점검, 장애 등으로 일시적으로 이용이 제한될 수 있습니다.</li>
+                <li>서비스 중단으로 인한 손해에 대해 배상하지 않습니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>지적 재산권</h2>
+            <p>본 서비스의 디자인, 코드, 콘텐츠에 대한 권리는 서비스 제공자에게 있습니다. 무단 복제, 배포를 금지합니다.</p>
+        </div>
+    '''
+    return get_legal_page_template('면책조항', content)
+
+
+# =====================================================
 # 커뮤니티 페이지
 # =====================================================
 @app.route('/community')
@@ -5840,15 +6076,17 @@ def index():
         <!-- 푸터 -->
         <footer class="footer">
             <div class="footer-disclaimer">
-                <h4>서비스 이용 안내 및 면책 조항</h4>
+                <h4>서비스 이용 안내</h4>
                 <ul>
                     <li>본 서비스는 공개된 블로그 정보를 분석하여 참고용 지표를 제공합니다.</li>
                     <li>분석 결과는 자체 알고리즘 기반의 추정치이며, 네이버 공식 지수가 아닙니다.</li>
-                    <li>데이터 출처: 네이버 블로그 RSS 피드 및 공개 페이지</li>
                     <li>본 서비스는 네이버와 무관한 독립 서비스입니다.</li>
-                    <li>분석 결과의 정확성을 보장하지 않으며, 이용에 따른 책임은 사용자에게 있습니다.</li>
-                    <li>개인정보는 수집하지 않으며, 분석 기록은 브라우저에만 저장됩니다.</li>
                 </ul>
+            </div>
+            <div class="footer-links">
+                <a href="/privacy">개인정보처리방침</a>
+                <a href="/terms">이용약관</a>
+                <a href="/disclaimer">면책조항</a>
             </div>
             <div class="footer-copyright">
                 Blog Index Analyzer &copy; 2025 |
