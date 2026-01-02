@@ -9243,9 +9243,10 @@ def index():
                                         if (allKeywords.length > 0) {
                                             const firstKw = allKeywords[0];
                                             const remainCount = allKeywords.length - 1;
-                                            const keywordsJson = JSON.stringify(allKeywords).replace(/'/g, "&#39;");
+                                            const safeTitle = (post.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                                            const safeKeywords = allKeywords.join('|||');
                                             if (remainCount > 0) {
-                                                keywordsHtml = '<span class="morpheme-preview" onclick=\\'showMorphemePopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="cursor: pointer; background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;"><span style="color: #fff;">' + firstKw + '</span> <span style="color: #667eea; font-size: 10px;">외 ' + remainCount + '개</span></span>';
+                                                keywordsHtml = '<span class="morpheme-preview" data-keywords="' + safeKeywords + '" data-title="' + safeTitle + '" onclick="handleMorphemeClick(this)" style="cursor: pointer; background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;"><span style="color: #fff;">' + firstKw + '</span> <span style="color: #667eea; font-size: 10px;">외 ' + remainCount + '개</span></span>';
                                             } else {
                                                 keywordsHtml = '<span style="background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;">' + firstKw + '</span>';
                                             }
@@ -9368,6 +9369,13 @@ def index():
                     adfit.render();
                 }
             }, 200);
+        }
+
+        // 형태소 클릭 핸들러
+        function handleMorphemeClick(element) {
+            const keywords = element.getAttribute('data-keywords').split('|||');
+            const title = element.getAttribute('data-title');
+            showMorphemePopup(keywords, title);
         }
 
         // 형태소 팝업 함수
