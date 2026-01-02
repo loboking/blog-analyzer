@@ -1761,6 +1761,777 @@ def like_community_post(post_id):
         return jsonify({'success': False, 'error': str(e)})
 
 
+# =====================================================
+# 커뮤니티 페이지
+# =====================================================
+@app.route('/community')
+def community_page():
+    """커뮤니티 페이지"""
+    return '''<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>블로거 커뮤니티 - 블로그 지수 분석기</title>
+    <meta name="description" content="블로거들의 소통 공간. 질문, 정보공유, 성장일기를 나눠보세요.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- 카카오 애드핏 -->
+    <script async src="https://t1.daumcdn.net/kas/static/ba.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+            color: #1a1a2e;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 헤더 */
+        .community-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .light-mode .back-btn {
+            background: rgba(0,0,0,0.05);
+            color: #1a1a2e;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .theme-toggle {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* 상단 배너 광고 */
+        .ad-banner-top {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .ad-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 5px;
+        }
+
+        .light-mode .ad-label {
+            color: rgba(0,0,0,0.4);
+        }
+
+        /* 카테고리 탭 */
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .category-tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 25px;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .category-tab:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .light-mode .category-tab {
+            background: rgba(0,0,0,0.05);
+            color: rgba(0,0,0,0.6);
+        }
+
+        .light-mode .category-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        /* 글쓰기 섹션 */
+        .write-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .light-mode .write-section {
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .write-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .light-mode .write-header {
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .write-header-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .write-arrow {
+            transition: transform 0.3s;
+        }
+
+        .write-form {
+            display: none;
+            padding: 20px;
+        }
+
+        .write-form.active {
+            display: block;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .light-mode .form-input {
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #f8f9fa;
+            color: #1a1a2e;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .light-mode .form-input::placeholder {
+            color: rgba(0,0,0,0.4);
+        }
+
+        .form-select {
+            padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+            color: #fff;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .light-mode .form-select {
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #f8f9fa;
+            color: #1a1a2e;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+            color: #fff;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+            margin-bottom: 12px;
+        }
+
+        .light-mode .form-textarea {
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #f8f9fa;
+            color: #1a1a2e;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 글쓰기 아래 광고 */
+        .ad-after-write {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* 게시글 목록 */
+        .posts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .post-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .post-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .light-mode .post-card {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .light-mode .post-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+
+        .post-category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .post-category-badge.question {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ffb74d;
+        }
+
+        .post-category-badge.info {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+
+        .post-category-badge.diary {
+            background: rgba(156, 39, 176, 0.2);
+            color: #ba68c8;
+        }
+
+        .post-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .light-mode .post-meta {
+            color: rgba(0,0,0,0.5);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        /* 중간 광고 (게시글 사이) */
+        .ad-in-list {
+            background: rgba(0,0,0,0.15);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .light-mode .ad-in-list {
+            background: rgba(0,0,0,0.03);
+        }
+
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 30px;
+        }
+
+        .page-btn {
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .light-mode .page-btn {
+            background: rgba(0,0,0,0.05);
+            color: rgba(0,0,0,0.6);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .light-mode .empty-state {
+            color: rgba(0,0,0,0.5);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* 하단 광고 */
+        .ad-bottom {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="community-header">
+            <div class="header-left">
+                <a href="/" class="back-btn">← 분석기</a>
+                <div class="page-title">💬 블로거 커뮤니티</div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="테마 전환">🌙</button>
+        </div>
+
+        <!-- 상단 배너 광고 -->
+        <div class="ad-banner-top">
+            <div class="ad-label">광고</div>
+            <ins class="kakao_ad_area" style="display:none;"
+            data-ad-unit = "DAN-swwvk4Kp8cMpG1FI"
+            data-ad-width = "320"
+            data-ad-height = "100"></ins>
+        </div>
+
+        <!-- 카테고리 탭 -->
+        <div class="category-tabs">
+            <button class="category-tab active" onclick="switchTab('all', this)">전체</button>
+            <button class="category-tab" onclick="switchTab('question', this)">❓ 질문</button>
+            <button class="category-tab" onclick="switchTab('info', this)">📢 정보공유</button>
+            <button class="category-tab" onclick="switchTab('diary', this)">📝 성장일기</button>
+        </div>
+
+        <!-- 글쓰기 섹션 -->
+        <div class="write-section">
+            <div class="write-header" onclick="toggleWriteForm()">
+                <span class="write-header-title">✏️ 새 글 작성하기</span>
+                <span class="write-arrow">▼</span>
+            </div>
+            <div class="write-form" id="writeForm">
+                <div class="form-row">
+                    <input type="text" class="form-input" id="inputNickname" placeholder="닉네임 (익명 가능)" maxlength="20">
+                    <select class="form-select" id="inputCategory">
+                        <option value="question">질문</option>
+                        <option value="info">정보공유</option>
+                        <option value="diary">성장일기</option>
+                    </select>
+                </div>
+                <input type="text" class="form-input" id="inputTitle" placeholder="제목을 입력하세요" maxlength="100" style="width:100%; margin-bottom:12px;">
+                <textarea class="form-textarea" id="inputContent" placeholder="내용을 입력하세요"></textarea>
+                <button class="submit-btn" onclick="submitPost()">작성하기</button>
+            </div>
+        </div>
+
+        <!-- 글쓰기 아래 광고 -->
+        <div class="ad-after-write">
+            <div class="ad-label">광고</div>
+            <ins class="kakao_ad_area" style="display:none;"
+            data-ad-unit = "DAN-qYU1Nbac9rUaGFpF"
+            data-ad-width = "320"
+            data-ad-height = "100"></ins>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div class="posts-list" id="postsList">
+            <div class="loading">게시글을 불러오는 중...</div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" id="pagination"></div>
+
+        <!-- 하단 광고 -->
+        <div class="ad-bottom">
+            <div class="ad-label">광고</div>
+            <ins class="kakao_ad_area" style="display:none;"
+            data-ad-unit = "DAN-swwvk4Kp8cMpG1FI"
+            data-ad-width = "320"
+            data-ad-height = "100"></ins>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'all';
+        let currentPage = 1;
+        const postsPerPage = 10;
+
+        // 테마 관리
+        const THEME_KEY = 'blog_analyzer_theme';
+
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                btn.textContent = '🌙';
+                localStorage.setItem(THEME_KEY, 'dark');
+            } else {
+                body.classList.add('light-mode');
+                btn.textContent = '☀️';
+                localStorage.setItem(THEME_KEY, 'light');
+            }
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem(THEME_KEY);
+            const btn = document.querySelector('.theme-toggle');
+            if (saved === 'light') {
+                document.body.classList.add('light-mode');
+                if (btn) btn.textContent = '☀️';
+            }
+        }
+
+        // 글쓰기 폼 토글
+        function toggleWriteForm() {
+            const form = document.getElementById('writeForm');
+            const arrow = document.querySelector('.write-arrow');
+            form.classList.toggle('active');
+            arrow.style.transform = form.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // 탭 전환
+        function switchTab(tab, btn) {
+            currentTab = tab;
+            currentPage = 1;
+
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            loadPosts();
+        }
+
+        // 게시글 로드
+        async function loadPosts() {
+            const container = document.getElementById('postsList');
+            container.innerHTML = '<div class="loading">게시글을 불러오는 중...</div>';
+
+            try {
+                let url = '/api/community/posts?page=' + currentPage + '&limit=' + postsPerPage;
+                if (currentTab !== 'all') {
+                    url += '&category=' + currentTab;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.posts && data.posts.length > 0) {
+                    const categoryNames = {
+                        'question': '질문',
+                        'info': '정보공유',
+                        'diary': '성장일기'
+                    };
+
+                    let html = '';
+                    data.posts.forEach((post, index) => {
+                        html += `
+                            <div class="post-card" onclick="viewPost(${post.id})">
+                                <span class="post-category-badge ${post.category}">${categoryNames[post.category] || post.category}</span>
+                                <div class="post-title">${escapeHtml(post.title)}</div>
+                                <div class="post-meta">
+                                    <span>${post.nickname || '익명'}</span>
+                                    <span>${formatDate(post.created_at)}</span>
+                                    <div class="post-stats">
+                                        <span>👍 ${post.likes || 0}</span>
+                                        <span>💬 ${post.comments || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // 5개마다 광고 삽입
+                        if ((index + 1) % 5 === 0 && index < data.posts.length - 1) {
+                            html += `
+                                <div class="ad-in-list">
+                                    <div class="ad-label">광고</div>
+                                    <ins class="kakao_ad_area" style="display:none;"
+                                    data-ad-unit = "DAN-qYU1Nbac9rUaGFpF"
+                                    data-ad-width = "320"
+                                    data-ad-height = "100"></ins>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    container.innerHTML = html;
+                    renderPagination(data.total);
+
+                    // 광고 다시 로드
+                    if (window.kakaoAdFit) {
+                        kakaoAdFit.load();
+                    }
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <p>아직 게시글이 없습니다.</p>
+                            <p style="font-size: 13px; margin-top: 8px;">첫 번째 글을 작성해보세요!</p>
+                        </div>
+                    `;
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Load posts error:', error);
+                container.innerHTML = '<div class="empty-state">게시글을 불러올 수 없습니다.</div>';
+            }
+        }
+
+        // 페이지네이션
+        function renderPagination(total) {
+            const container = document.getElementById('pagination');
+            const totalPages = Math.ceil(total / postsPerPage);
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadPosts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 글 작성
+        async function submitPost() {
+            const nickname = document.getElementById('inputNickname').value.trim() || '익명';
+            const category = document.getElementById('inputCategory').value;
+            const title = document.getElementById('inputTitle').value.trim();
+            const content = document.getElementById('inputContent').value.trim();
+
+            if (!title) {
+                alert('제목을 입력해주세요.');
+                return;
+            }
+            if (!content) {
+                alert('내용을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/community/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname, category, title, content })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('게시글이 작성되었습니다!');
+                    document.getElementById('inputNickname').value = '';
+                    document.getElementById('inputTitle').value = '';
+                    document.getElementById('inputContent').value = '';
+                    toggleWriteForm();
+                    loadPosts();
+                } else {
+                    alert(data.error || '게시글 작성에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('게시글 작성 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 글 보기
+        function viewPost(postId) {
+            alert('게시글 상세 보기 기능은 준비 중입니다.');
+        }
+
+        // 유틸리티
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return '방금 전';
+            if (diff < 3600000) return Math.floor(diff / 60000) + '분 전';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '시간 전';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + '일 전';
+
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            loadPosts();
+        });
+    </script>
+</body>
+</html>'''
+
+
 # ads.txt (광고 인증)
 @app.route('/ads.txt')
 def ads_txt():
@@ -1786,6 +2557,12 @@ def sitemap():
     <lastmod>2026-01-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://blog-analyzer-aafw.onrender.com/community</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>'''
     return sitemap_xml, 200, {'Content-Type': 'application/xml; charset=utf-8'}
@@ -4838,10 +5615,9 @@ def index():
     </div>
 
     <!-- 커뮤니티 플로팅 버튼 -->
-    <button class="community-float-btn" onclick="openCommunity()" title="커뮤니티">
+    <a href="/community" class="community-float-btn" title="커뮤니티">
         <span class="float-icon">💬</span>
-        <span class="float-badge" id="communityBadge" style="display: none;">0</span>
-    </button>
+    </a>
 
     <!-- 사이드바 광고 (160x600) - PC에서만 표시 -->
     <div class="ad-sidebar ad-sidebar-right">
