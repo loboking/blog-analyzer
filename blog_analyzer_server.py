@@ -6367,11 +6367,12 @@ def index():
                                         const postKeywords = getPostKeywords(post, 5);
                                         let keywordsDisplay = '-';
                                         if (postKeywords.length > 0) {
-                                            const keywordsJson = JSON.stringify(postKeywords).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                                            const kwId = 'kw_' + idx;
+                                            window['kwData_' + idx] = { keywords: postKeywords, title: post.title || '' };
                                             if (postKeywords.length === 1) {
-                                                keywordsDisplay = '<span class="keyword-clickable" onclick=\\'showKeywordPopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' 🔍</span>';
+                                                keywordsDisplay = '<span class="keyword-clickable" onclick="showKeywordPopupById(' + idx + ')" style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' 🔍</span>';
                                             } else {
-                                                keywordsDisplay = '<span class="keyword-clickable" onclick=\\'showKeywordPopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' <span style="color: rgba(255,255,255,0.6);">외 ' + (postKeywords.length - 1) + '개</span> 🔍</span>';
+                                                keywordsDisplay = '<span class="keyword-clickable" onclick="showKeywordPopupById(' + idx + ')" style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' <span style="color: rgba(255,255,255,0.6);">외 ' + (postKeywords.length - 1) + '개</span> 🔍</span>';
                                             }
                                         }
 
@@ -6907,6 +6908,14 @@ def index():
         function closeModalOnOverlay(event) {
             if (event.target === document.getElementById('analysisModal')) {
                 closeAnalysisModal();
+            }
+        }
+
+        // 키워드 팝업 표시 함수 (ID로 호출)
+        function showKeywordPopupById(idx) {
+            const data = window['kwData_' + idx];
+            if (data) {
+                showKeywordPopup(data.keywords, data.title);
             }
         }
 
