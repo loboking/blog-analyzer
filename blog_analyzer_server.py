@@ -6848,43 +6848,46 @@ def index():
         }
 
         function calculatePostScore(post) {
-            let score = 40; // 기본 점수 (조정)
+            let score = 0; // 기본 점수 0점 (엄격한 평가)
 
-            // 제목 점수 (최대 15점)
+            // 제목 점수 (최대 20점)
             const titleLen = (post.title || '').length;
-            if (titleLen >= 20 && titleLen <= 40) score += 15;
-            else if (titleLen >= 15 && titleLen <= 50) score += 8;
-            else if (titleLen < 15) score -= 5;
+            if (titleLen >= 25 && titleLen <= 45) score += 20;
+            else if (titleLen >= 20 && titleLen <= 50) score += 12;
+            else if (titleLen >= 15) score += 5;
+            // 15자 미만은 0점
 
-            // 이미지 점수 (최대 15점)
+            // 이미지 점수 (최대 20점)
             const images = post.images || 0;
-            if (images >= 3 && images <= 10) score += 15;
-            else if (images >= 1 && images < 3) score += 8;
-            else if (images > 10) score += 12;
-            else score -= 10;
+            if (images >= 5 && images <= 15) score += 20;
+            else if (images >= 3 && images <= 20) score += 12;
+            else if (images >= 1) score += 5;
+            // 0개는 0점
 
-            // 본문 점수 (최대 15점) - 새로 추가
+            // 본문 점수 (최대 25점)
             const charCount = post.char_count || 0;
-            if (charCount >= 2000) score += 15;
+            if (charCount >= 3000) score += 25;
+            else if (charCount >= 2000) score += 18;
             else if (charCount >= 1500) score += 12;
-            else if (charCount >= 1000) score += 8;
-            else if (charCount >= 500) score += 4;
-            else score -= 5;
+            else if (charCount >= 1000) score += 6;
+            // 1000자 미만은 0점
 
-            // 소제목 점수 (최대 5점) - 새로 추가
+            // 소제목 점수 (최대 10점)
             const subheadings = post.subheading_count || 0;
-            if (subheadings >= 2 && subheadings <= 5) score += 5;
-            else if (subheadings > 0) score += 2;
+            if (subheadings >= 3) score += 10;
+            else if (subheadings >= 2) score += 6;
+            else if (subheadings >= 1) score += 3;
 
-            // 노출 점수 (최대 20점)
-            if (post.exposure === 'indexed') score += 20;
-            else if (post.exposure === 'pending') score += 8;
+            // 노출 점수 (최대 15점)
+            if (post.exposure === 'indexed') score += 15;
+            else if (post.exposure === 'pending') score += 5;
+            // missing/unknown은 0점
 
             // 참여도 점수 (최대 10점)
             const engagement = (post.likes || 0) + (post.comments || 0);
-            if (engagement >= 20) score += 10;
-            else if (engagement >= 10) score += 7;
-            else if (engagement >= 5) score += 4;
+            if (engagement >= 30) score += 10;
+            else if (engagement >= 15) score += 6;
+            else if (engagement >= 5) score += 3;
 
             return Math.max(0, Math.min(100, score));
         }
