@@ -6253,12 +6253,86 @@ def index():
             }
 
             .trends-list {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
                 gap: 8px;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+            }
+
+            .trends-list::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .trends-list::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.1);
+                border-radius: 2px;
+            }
+
+            .trends-list::-webkit-scrollbar-thumb {
+                background: rgba(102,126,234,0.5);
+                border-radius: 2px;
             }
 
             .trend-item {
                 font-size: 12px;
                 padding: 6px 10px;
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+
+            /* 최근 분석 기록 가로 스크롤 */
+            .history-list {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 8px;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+            }
+
+            .history-list::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .history-list::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.1);
+                border-radius: 2px;
+            }
+
+            .history-list::-webkit-scrollbar-thumb {
+                background: rgba(102,126,234,0.5);
+                border-radius: 2px;
+            }
+
+            .history-item {
+                flex-shrink: 0;
+                padding: 6px 10px;
+            }
+
+            .history-item-name {
+                font-size: 12px;
+                max-width: 80px;
+            }
+
+            .history-item-grade {
+                font-size: 10px;
+            }
+
+            .history-item-date {
+                display: none;
+            }
+
+            .history-section {
+                padding: 12px !important;
+                border-radius: 12px !important;
+            }
+
+            .history-header {
+                font-size: 13px;
             }
         }
 
