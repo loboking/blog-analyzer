@@ -21,6 +21,16 @@ import urllib.parse
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Supabase 연동
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://xmkhsiscudfsqejqtkaf.supabase.co')
+    SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_KEY else None
+except Exception as e:
+    print(f"Supabase 초기화 실패: {e}")
+    supabase = None
+
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
@@ -1497,6 +1507,98 @@ def keyword_suggest():
         return jsonify({'suggestions': [], 'error': str(e)})
 
 
+# ============ Supabase DB API ============
+
+@app.route('/api/history/save', methods=['POST'])
+def save_analysis_history():
+    """분석 결과를 Supabase에 저장"""
+    if not supabase:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨'}), 500
+
+    try:
+        data = request.get_json()
+        blog_id = data.get('blog_id')
+        analysis_data = data.get('analysis_data')
+
+        if not blog_id or not analysis_data:
+            return jsonify({'success': False, 'error': '필수 데이터 누락'}), 400
+
+        # 저장할 데이터 구성
+        record = {
+            'blog_id': blog_id,
+            'blog_name': analysis_data.get('blog_name', ''),
+            'daily_visitors': analysis_data.get('daily_visitors', 0),
+            'total_posts': analysis_data.get('total_posts', 0),
+            'neighbors': analysis_data.get('neighbors', 0),
+            'index_score': analysis_data.get('index', {}).get('score', 0),
+            'index_grade': analysis_data.get('index', {}).get('grade', ''),
+            'analyzed_at': datetime.now().isoformat(),
+            'full_data': json.dumps(analysis_data, ensure_ascii=False)
+        }
+
+        # Supabase에 저장
+        result = supabase.table('blog_history').insert(record).execute()
+
+        return jsonify({'success': True, 'data': result.data})
+
+    except Exception as e:
+        print(f"Save history error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/history/<blog_id>')
+def get_analysis_history(blog_id):
+    """특정 블로그의 분석 히스토리 조회"""
+    if not supabase:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨', 'history': []}), 500
+
+    try:
+        # 최근 30일 데이터 조회
+        result = supabase.table('blog_history') \
+            .select('*') \
+            .eq('blog_id', blog_id) \
+            .order('analyzed_at', desc=True) \
+            .limit(30) \
+            .execute()
+
+        return jsonify({'success': True, 'history': result.data})
+
+    except Exception as e:
+        print(f"Get history error: {e}")
+        return jsonify({'success': False, 'error': str(e), 'history': []}), 500
+
+
+@app.route('/api/history/recent')
+def get_recent_blogs():
+    """최근 분석된 블로그 목록 조회"""
+    if not supabase:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨', 'blogs': []}), 500
+
+    try:
+        # 최근 분석된 블로그 (중복 제거, 최신순)
+        result = supabase.table('blog_history') \
+            .select('blog_id, blog_name, index_grade, daily_visitors, analyzed_at') \
+            .order('analyzed_at', desc=True) \
+            .limit(50) \
+            .execute()
+
+        # 블로그 ID별 최신 데이터만 추출
+        seen = set()
+        unique_blogs = []
+        for item in result.data:
+            if item['blog_id'] not in seen:
+                seen.add(item['blog_id'])
+                unique_blogs.append(item)
+                if len(unique_blogs) >= 10:
+                    break
+
+        return jsonify({'success': True, 'blogs': unique_blogs})
+
+    except Exception as e:
+        print(f"Get recent blogs error: {e}")
+        return jsonify({'success': False, 'error': str(e), 'blogs': []}), 500
+
+
 # ads.txt (광고 인증)
 @app.route('/ads.txt')
 def ads_txt():
@@ -1510,6 +1612,31 @@ kakao.com, pub-4939783373620498, DIRECT"""
 def google_verification():
     """Google Search Console verification"""
     return 'google-site-verification: google14d6946e204296a4.html', 200, {'Content-Type': 'text/html; charset=utf-8'}
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Sitemap for search engines"""
+    sitemap_xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://blog-analyzer-aafw.onrender.com/</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>'''
+    return sitemap_xml, 200, {'Content-Type': 'application/xml; charset=utf-8'}
+
+
+@app.route('/robots.txt')
+def robots():
+    """Robots.txt for search engines"""
+    robots_txt = '''User-agent: *
+Allow: /
+
+Sitemap: https://blog-analyzer-aafw.onrender.com/sitemap.xml'''
+    return robots_txt, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 # HTML 페이지 (프론트엔드)
