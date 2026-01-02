@@ -9258,8 +9258,11 @@ def index():
                                         // 더보기 숨김 처리
                                         const hiddenClass = idx >= 5 ? 'hidden-post-row' : '';
 
+                                        // 제목 이스케이핑
+                                        const escapedTitle = (post.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
                                         return '<tr class="' + hiddenClass + '">' +
-                                            '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + (post.title || '') + '">' + (post.title || '제목 없음') + '</a></td>' +
+                                            '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + escapedTitle + '">' + escapedTitle + '</a></td>' +
                                             '<td style="text-align: center;">' + missingStatus + '</td>' +
                                             '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
                                             '<td style="text-align: center;">' + (post.comments || 0) + '</td>' +
@@ -9267,7 +9270,7 @@ def index():
                                             '<td style="text-align: center;">' + (post.images || 0) + '</td>' +
                                             '<td style="text-align: center;"><span style="background: ' + scoreColor + '20; color: ' + scoreColor + '; padding: 3px 8px; border-radius: 10px; font-weight: 600; font-size: 11px;">' + score + '점</span></td>' +
                                             '<td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 11px;">' + dateDisplay + '</td>' +
-                                            '<td><button class="analyze-btn" onclick=\\'showPostAnalysis(' + JSON.stringify(post).replace(/'/g, "&#39;").replace(/\\\\/g, "\\\\\\\\") + ')\\'>🔍 상세</button></td>' +
+                                            '<td><button class="analyze-btn" data-post-idx="' + idx + '" onclick="handlePostAnalysis(this)">🔍 상세</button></td>' +
                                         '</tr>';
                                     }).join('')}
                                 </tbody>
@@ -9376,6 +9379,14 @@ def index():
             const keywords = element.getAttribute('data-keywords').split('|||');
             const title = element.getAttribute('data-title');
             showMorphemePopup(keywords, title);
+        }
+
+        // 포스트 분석 클릭 핸들러
+        function handlePostAnalysis(element) {
+            const idx = parseInt(element.getAttribute('data-post-idx'));
+            if (currentAnalysisData && currentAnalysisData.posts_with_index && currentAnalysisData.posts_with_index[idx]) {
+                showPostAnalysis(currentAnalysisData.posts_with_index[idx]);
+            }
         }
 
         // 형태소 팝업 함수
