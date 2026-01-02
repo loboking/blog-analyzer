@@ -21,15 +21,37 @@ import urllib.parse
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Supabase 연동
-try:
-    from supabase import create_client, Client
-    SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://xmkhsiscudfsqejqtkaf.supabase.co')
-    SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_KEY else None
-except Exception as e:
-    print(f"Supabase 초기화 실패: {e}")
-    supabase = None
+# Supabase 연동 (REST API 직접 호출 방식)
+SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://xmkhsiscudfsqejqtkaf.supabase.co')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+
+def supabase_request(method, table, data=None, params=None):
+    """Supabase REST API 직접 호출"""
+    if not SUPABASE_KEY:
+        return None
+
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': f'Bearer {SUPABASE_KEY}',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    }
+
+    try:
+        if method == 'GET':
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+        elif method == 'POST':
+            response = requests.post(url, headers=headers, json=data, timeout=10)
+
+        if response.status_code in [200, 201]:
+            return response.json()
+        else:
+            print(f"Supabase error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Supabase request error: {e}")
+        return None
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -1512,7 +1534,7 @@ def keyword_suggest():
 @app.route('/api/history/save', methods=['POST'])
 def save_analysis_history():
     """분석 결과를 Supabase에 저장"""
-    if not supabase:
+    if not SUPABASE_KEY:
         return jsonify({'success': False, 'error': 'DB 연결 안됨'}), 500
 
     try:
@@ -1536,10 +1558,13 @@ def save_analysis_history():
             'full_data': json.dumps(analysis_data, ensure_ascii=False)
         }
 
-        # Supabase에 저장
-        result = supabase.table('blog_history').insert(record).execute()
+        # Supabase REST API로 저장
+        result = supabase_request('POST', 'blog_history', data=record)
 
-        return jsonify({'success': True, 'data': result.data})
+        if result:
+            return jsonify({'success': True, 'data': result})
+        else:
+            return jsonify({'success': False, 'error': 'DB 저장 실패'}), 500
 
     except Exception as e:
         print(f"Save history error: {e}")
@@ -1549,19 +1574,20 @@ def save_analysis_history():
 @app.route('/api/history/<blog_id>')
 def get_analysis_history(blog_id):
     """특정 블로그의 분석 히스토리 조회"""
-    if not supabase:
+    if not SUPABASE_KEY:
         return jsonify({'success': False, 'error': 'DB 연결 안됨', 'history': []}), 500
 
     try:
         # 최근 30일 데이터 조회
-        result = supabase.table('blog_history') \
-            .select('*') \
-            .eq('blog_id', blog_id) \
-            .order('analyzed_at', desc=True) \
-            .limit(30) \
-            .execute()
+        params = {
+            'select': '*',
+            'blog_id': f'eq.{blog_id}',
+            'order': 'analyzed_at.desc',
+            'limit': '30'
+        }
+        result = supabase_request('GET', 'blog_history', params=params)
 
-        return jsonify({'success': True, 'history': result.data})
+        return jsonify({'success': True, 'history': result or []})
 
     except Exception as e:
         print(f"Get history error: {e}")
@@ -1571,21 +1597,22 @@ def get_analysis_history(blog_id):
 @app.route('/api/history/recent')
 def get_recent_blogs():
     """최근 분석된 블로그 목록 조회"""
-    if not supabase:
+    if not SUPABASE_KEY:
         return jsonify({'success': False, 'error': 'DB 연결 안됨', 'blogs': []}), 500
 
     try:
         # 최근 분석된 블로그 (중복 제거, 최신순)
-        result = supabase.table('blog_history') \
-            .select('blog_id, blog_name, index_grade, daily_visitors, analyzed_at') \
-            .order('analyzed_at', desc=True) \
-            .limit(50) \
-            .execute()
+        params = {
+            'select': 'blog_id,blog_name,index_grade,daily_visitors,analyzed_at',
+            'order': 'analyzed_at.desc',
+            'limit': '50'
+        }
+        result = supabase_request('GET', 'blog_history', params=params)
 
         # 블로그 ID별 최신 데이터만 추출
         seen = set()
         unique_blogs = []
-        for item in result.data:
+        for item in (result or []):
             if item['blog_id'] not in seen:
                 seen.add(item['blog_id'])
                 unique_blogs.append(item)
