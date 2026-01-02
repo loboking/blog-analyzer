@@ -3427,12 +3427,567 @@ def index():
         .light-mode .ad-label {
             color: rgba(0, 0, 0, 0.3);
         }
+
+        /* =====================================================
+           슬라이드 메뉴 스타일
+        ===================================================== */
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 8px 12px;
+            color: #fff;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .light-mode .hamburger-btn {
+            color: #1a1a2e;
+        }
+
+        .light-mode .hamburger-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* 슬라이드 메뉴 오버레이 */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 998;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 슬라이드 메뉴 */
+        .slide-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 320px;
+            max-width: 85vw;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-menu.active {
+            transform: translateX(0);
+        }
+
+        .light-mode .slide-menu {
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .light-mode .menu-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .light-mode .menu-title {
+            color: #1a1a2e;
+        }
+
+        .menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .light-mode .menu-close {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .light-mode .menu-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1a1a2e;
+        }
+
+        .menu-content {
+            padding: 16px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .light-mode .menu-item {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .light-mode .menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1a1a2e;
+        }
+
+        .menu-item-icon {
+            font-size: 18px;
+        }
+
+        /* 서브메뉴 아코디언 */
+        .menu-accordion {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .light-mode .menu-accordion {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .light-mode .accordion-header {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .light-mode .accordion-header:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .accordion-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .accordion-arrow {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .accordion-header.active .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .light-mode .accordion-arrow {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .accordion-content.active {
+            max-height: 500px;
+        }
+
+        .light-mode .accordion-content {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px 12px 52px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .submenu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .light-mode .submenu-item {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .light-mode .submenu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1a1a2e;
+        }
+
+        .submenu-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .light-mode .submenu-dot {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 가이드 모달 */
+        .guide-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .guide-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .guide-modal-content {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .guide-modal.active .guide-modal-content {
+            transform: scale(1);
+        }
+
+        .light-mode .guide-modal-content {
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .guide-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .light-mode .guide-modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .guide-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .light-mode .guide-modal-title {
+            color: #1a1a2e;
+        }
+
+        .guide-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .guide-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .light-mode .guide-modal-close {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .light-mode .guide-modal-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1a1a2e;
+        }
+
+        .guide-modal-body {
+            padding: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.8;
+        }
+
+        .light-mode .guide-modal-body {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .guide-modal-body h3 {
+            color: #4facfe;
+            margin: 20px 0 12px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .light-mode .guide-modal-body h3 {
+            color: #0062cc;
+        }
+
+        .guide-modal-body h3:first-child {
+            margin-top: 0;
+        }
+
+        .guide-modal-body p {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .light-mode .guide-modal-body p {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .guide-modal-body ul {
+            margin: 0 0 16px 0;
+            padding-left: 20px;
+        }
+
+        .guide-modal-body li {
+            margin: 8px 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .light-mode .guide-modal-body li {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .guide-tip {
+            background: rgba(79, 172, 254, 0.15);
+            border-left: 4px solid #4facfe;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .light-mode .guide-tip {
+            background: rgba(0, 98, 204, 0.1);
+            border-left-color: #0062cc;
+        }
+
+        .guide-tip-title {
+            font-weight: 700;
+            color: #4facfe;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .light-mode .guide-tip-title {
+            color: #0062cc;
+        }
+
+        .guide-tip p {
+            margin: 0 !important;
+            font-size: 13px !important;
+        }
+
+        /* 헤더 레이아웃 조정 */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        /* 반응형 슬라이드 메뉴 */
+        @media (max-width: 768px) {
+            .slide-menu {
+                width: 280px;
+            }
+
+            .menu-item, .accordion-header {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+
+            .submenu-item {
+                padding: 10px 16px 10px 44px;
+                font-size: 13px;
+            }
+
+            .guide-modal-content {
+                max-height: 90vh;
+            }
+
+            .guide-modal-body {
+                padding: 20px;
+            }
+        }
     </style>
 
     <!-- 카카오 애드핏 스크립트 (한 번만 로드) -->
     <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
 </head>
 <body>
+    <!-- 슬라이드 메뉴 오버레이 -->
+    <div class="menu-overlay" onclick="closeSlideMenu()"></div>
+
+    <!-- 슬라이드 메뉴 -->
+    <nav class="slide-menu" id="slideMenu">
+        <div class="menu-header">
+            <span class="menu-title">메뉴</span>
+            <button class="menu-close" onclick="closeSlideMenu()">&times;</button>
+        </div>
+        <div class="menu-content">
+            <!-- 홈 -->
+            <div class="menu-item" onclick="goHome()">
+                <span class="menu-item-icon">🏠</span>
+                <span>홈</span>
+            </div>
+
+            <!-- 키워드 분석 가이드 아코디언 -->
+            <div class="menu-accordion">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <span class="menu-item-icon">📚</span>
+                        <span>키워드 분석 가이드</span>
+                    </div>
+                    <span class="accordion-arrow">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="submenu-item" onclick="showGuide('keyword-selection')">
+                        <span class="submenu-dot"></span>
+                        <span>키워드 선정법</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('search-volume')">
+                        <span class="submenu-dot"></span>
+                        <span>검색량 확인하기</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('longtail')">
+                        <span class="submenu-dot"></span>
+                        <span>롱테일 키워드란?</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 블로그 성장 팁 아코디언 -->
+            <div class="menu-accordion">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <span class="menu-item-icon">📈</span>
+                        <span>블로그 성장 팁</span>
+                    </div>
+                    <span class="accordion-arrow">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="submenu-item" onclick="showGuide('seo')">
+                        <span class="submenu-dot"></span>
+                        <span>SEO 최적화 방법</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('title')">
+                        <span class="submenu-dot"></span>
+                        <span>제목 작성법</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('image')">
+                        <span class="submenu-dot"></span>
+                        <span>이미지 최적화</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용법 -->
+            <div class="menu-item" onclick="showGuide('usage')">
+                <span class="menu-item-icon">❓</span>
+                <span>사용법</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 가이드 모달 -->
+    <div class="guide-modal" id="guideModal" onclick="closeGuideModal(event)">
+        <div class="guide-modal-content" onclick="event.stopPropagation()">
+            <div class="guide-modal-header">
+                <div class="guide-modal-title" id="guideModalTitle">가이드</div>
+                <button class="guide-modal-close" onclick="closeGuideModal()">&times;</button>
+            </div>
+            <div class="guide-modal-body" id="guideModalBody">
+                <!-- 가이드 내용이 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+
     <!-- 사이드바 광고 (160x600) - PC에서만 표시 -->
     <div class="ad-sidebar ad-sidebar-right">
         <div class="ad-sidebar-container">
@@ -3449,11 +4004,14 @@ def index():
 
     <div class="container">
         <header>
-            <div class="logo">
-                <div class="logo-icon">📊</div>
-                <div>
-                    <h1>블로그 지수 분석기</h1>
-                    <p class="subtitle">검색 노출 확인 · AI 코칭 · 키워드 분석</p>
+            <div class="header-left">
+                <button class="hamburger-btn" onclick="openSlideMenu()" title="메뉴 열기">☰</button>
+                <div class="logo">
+                    <div class="logo-icon">📊</div>
+                    <div>
+                        <h1>블로그 지수 분석기</h1>
+                        <p class="subtitle">검색 노출 확인 · AI 코칭 · 키워드 분석</p>
+                    </div>
                 </div>
             </div>
             <div class="header-badges">
@@ -3556,6 +4114,312 @@ def index():
     </div>
     
     <script>
+        // =====================================================
+        // 슬라이드 메뉴 및 가이드 관리
+        // =====================================================
+
+        // 슬라이드 메뉴 열기
+        function openSlideMenu() {
+            document.getElementById('slideMenu').classList.add('active');
+            document.querySelector('.menu-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 슬라이드 메뉴 닫기
+        function closeSlideMenu() {
+            document.getElementById('slideMenu').classList.remove('active');
+            document.querySelector('.menu-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // 홈으로 이동
+        function goHome() {
+            closeSlideMenu();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // 결과 영역 숨기기
+            const resultSection = document.getElementById('resultSection');
+            if (resultSection) {
+                resultSection.style.display = 'none';
+            }
+        }
+
+        // 아코디언 토글
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+
+            // 모든 아코디언 닫기
+            document.querySelectorAll('.accordion-header').forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('active');
+            });
+
+            // 클릭한 아코디언만 열기 (이미 열려있었다면 닫힌 상태 유지)
+            if (!isActive) {
+                header.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+
+        // 가이드 내용 데이터
+        const guideContents = {
+            'keyword-selection': {
+                title: '📝 키워드 선정법',
+                content: `
+                    <h3>🎯 키워드 선정의 핵심 원칙</h3>
+                    <p>효과적인 키워드 선정은 블로그 성장의 첫 걸음입니다. 검색량과 경쟁도의 균형을 맞추는 것이 중요합니다.</p>
+
+                    <h3>✅ 좋은 키워드의 조건</h3>
+                    <ul>
+                        <li><strong>적절한 검색량:</strong> 월간 검색량 1,000~10,000 사이가 적당합니다</li>
+                        <li><strong>낮은 경쟁도:</strong> 상위 노출 블로그 수가 적을수록 유리합니다</li>
+                        <li><strong>명확한 검색 의도:</strong> 사용자가 원하는 정보가 명확한 키워드</li>
+                        <li><strong>내 전문 분야:</strong> 자신있게 글을 쓸 수 있는 주제</li>
+                    </ul>
+
+                    <h3>📊 키워드 분석 단계</h3>
+                    <ul>
+                        <li>1. 주제 관련 키워드 브레인스토밍</li>
+                        <li>2. 검색량 및 경쟁도 확인</li>
+                        <li>3. 상위 노출 글 분석</li>
+                        <li>4. 차별화 포인트 찾기</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>처음에는 경쟁이 낮은 롱테일 키워드로 시작하여 블로그 지수를 올린 후, 점차 경쟁이 높은 키워드에 도전하세요!</p>
+                    </div>
+                `
+            },
+            'search-volume': {
+                title: '🔍 검색량 확인하기',
+                content: `
+                    <h3>📈 검색량 확인 방법</h3>
+                    <p>키워드의 검색량을 파악하면 콘텐츠의 잠재적 도달 범위를 예측할 수 있습니다.</p>
+
+                    <h3>🛠 활용 가능한 도구</h3>
+                    <ul>
+                        <li><strong>네이버 검색광고:</strong> 키워드 도구에서 월간 검색량 확인</li>
+                        <li><strong>네이버 데이터랩:</strong> 키워드 트렌드 및 연령/성별 분포</li>
+                        <li><strong>블로그 분석기:</strong> 키워드 경쟁도와 함께 확인</li>
+                    </ul>
+
+                    <h3>📊 검색량 해석 가이드</h3>
+                    <ul>
+                        <li><strong>10,000 이상:</strong> 높은 검색량, 경쟁 치열</li>
+                        <li><strong>1,000~10,000:</strong> 적정 검색량, 도전 가치 있음</li>
+                        <li><strong>100~1,000:</strong> 낮은 검색량, 상위 노출 용이</li>
+                        <li><strong>100 미만:</strong> 매우 낮음, 틈새 시장</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>검색량만 보지 말고, 계절성과 트렌드도 함께 확인하세요. 특정 시즌에만 검색량이 급증하는 키워드도 있습니다!</p>
+                    </div>
+                `
+            },
+            'longtail': {
+                title: '🔗 롱테일 키워드란?',
+                content: `
+                    <h3>📌 롱테일 키워드 정의</h3>
+                    <p>롱테일 키워드는 3개 이상의 단어로 구성된 구체적인 검색어입니다. 검색량은 적지만 전환율이 높고 경쟁이 적습니다.</p>
+
+                    <h3>📊 예시 비교</h3>
+                    <ul>
+                        <li><strong>빅 키워드:</strong> "노트북" (검색량 높음, 경쟁 치열)</li>
+                        <li><strong>미들 키워드:</strong> "노트북 추천" (중간 수준)</li>
+                        <li><strong>롱테일:</strong> "대학생 가성비 노트북 추천 2024" (경쟁 낮음)</li>
+                    </ul>
+
+                    <h3>✅ 롱테일 키워드의 장점</h3>
+                    <ul>
+                        <li>상위 노출 달성이 상대적으로 쉬움</li>
+                        <li>검색 의도가 명확하여 양질의 방문자 유입</li>
+                        <li>블로그 초보자에게 적합</li>
+                        <li>다양한 롱테일로 트래픽 누적 가능</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>네이버 자동완성이나 연관 검색어를 활용하면 롱테일 키워드를 쉽게 찾을 수 있습니다!</p>
+                    </div>
+                `
+            },
+            'seo': {
+                title: '⚡ SEO 최적화 방법',
+                content: `
+                    <h3>🎯 SEO란?</h3>
+                    <p>SEO(검색 엔진 최적화)는 검색 결과에서 상위에 노출되도록 콘텐츠를 최적화하는 것입니다.</p>
+
+                    <h3>📝 제목 최적화</h3>
+                    <ul>
+                        <li>핵심 키워드를 제목 앞쪽에 배치</li>
+                        <li>30~45자 내외로 작성</li>
+                        <li>클릭을 유도하는 매력적인 제목</li>
+                    </ul>
+
+                    <h3>📄 본문 최적화</h3>
+                    <ul>
+                        <li>첫 문단에 핵심 키워드 자연스럽게 포함</li>
+                        <li>소제목(H2, H3)에도 키워드 활용</li>
+                        <li>1,500자 이상의 충분한 내용</li>
+                        <li>단락 구분과 가독성 있는 구성</li>
+                    </ul>
+
+                    <h3>🖼 이미지 최적화</h3>
+                    <ul>
+                        <li>이미지 파일명에 키워드 포함</li>
+                        <li>ALT 태그 필수 작성</li>
+                        <li>적절한 이미지 수 (3~10장)</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>키워드를 억지로 넣기보다 자연스러운 문맥에서 사용하세요. 과도한 키워드 반복은 오히려 역효과입니다!</p>
+                    </div>
+                `
+            },
+            'title': {
+                title: '✏️ 제목 작성법',
+                content: `
+                    <h3>📏 적절한 제목 길이</h3>
+                    <p>네이버 검색 결과에서 잘리지 않는 30~45자가 이상적입니다.</p>
+
+                    <h3>🎯 키워드 배치</h3>
+                    <ul>
+                        <li>핵심 키워드는 제목 앞쪽에 배치</li>
+                        <li>자연스러운 문장 형태 유지</li>
+                        <li>보조 키워드는 뒤쪽에 배치</li>
+                    </ul>
+
+                    <h3>✅ 좋은 제목 공식</h3>
+                    <ul>
+                        <li><strong>숫자 활용:</strong> "2024년 추천 노트북 TOP 5"</li>
+                        <li><strong>질문형:</strong> "초보자도 쉽게? 블로그 시작하는 방법"</li>
+                        <li><strong>해결형:</strong> "고민 끝! 여행 짐싸기 완벽 가이드"</li>
+                        <li><strong>비교형:</strong> "A vs B 무엇이 더 좋을까?"</li>
+                    </ul>
+
+                    <h3>❌ 피해야 할 제목</h3>
+                    <ul>
+                        <li>키워드만 나열한 제목</li>
+                        <li>특수문자 과다 사용</li>
+                        <li>너무 길거나 짧은 제목</li>
+                        <li>내용과 맞지 않는 낚시성 제목</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>상위 노출된 글의 제목 패턴을 분석하고, 자신만의 차별점을 더해보세요!</p>
+                    </div>
+                `
+            },
+            'image': {
+                title: '🖼 이미지 최적화',
+                content: `
+                    <h3>📁 파일명 최적화</h3>
+                    <p>이미지 파일명에 키워드를 포함하면 이미지 검색에서도 노출될 수 있습니다.</p>
+                    <ul>
+                        <li>❌ IMG_1234.jpg</li>
+                        <li>✅ 서울맛집_강남역_파스타.jpg</li>
+                    </ul>
+
+                    <h3>🏷 ALT 태그 작성</h3>
+                    <p>ALT 태그는 이미지를 설명하는 텍스트로, 검색 엔진이 이미지를 이해하는 데 도움을 줍니다.</p>
+                    <ul>
+                        <li>이미지 내용을 정확히 설명</li>
+                        <li>핵심 키워드 자연스럽게 포함</li>
+                        <li>간결하게 작성 (125자 이내)</li>
+                    </ul>
+
+                    <h3>📊 적절한 이미지 수</h3>
+                    <ul>
+                        <li>최소 3장 이상 권장</li>
+                        <li>글 길이에 따라 5~10장 적당</li>
+                        <li>이미지마다 관련 설명 추가</li>
+                    </ul>
+
+                    <h3>⚡ 용량 최적화</h3>
+                    <ul>
+                        <li>200KB 이하로 압축 권장</li>
+                        <li>WebP 포맷 활용 고려</li>
+                        <li>적절한 크기로 리사이징</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>직접 촬영한 사진이 저작권 문제도 없고, 검색 엔진에서도 더 좋은 평가를 받습니다!</p>
+                    </div>
+                `
+            },
+            'usage': {
+                title: '❓ 블로그 분석기 사용법',
+                content: `
+                    <h3>🔍 블로그 분석하기</h3>
+                    <ul>
+                        <li>1. 상단 입력창에 네이버 블로그 아이디 입력</li>
+                        <li>2. "분석하기" 버튼 클릭</li>
+                        <li>3. 블로그 지수, 최근 글 분석 결과 확인</li>
+                        <li>4. AI 코칭 내용으로 개선점 파악</li>
+                    </ul>
+
+                    <h3>🎯 키워드 분석하기</h3>
+                    <ul>
+                        <li>1. 키워드 입력창에 분석할 키워드 입력</li>
+                        <li>2. "연관 키워드" 버튼으로 관련 키워드 확인</li>
+                        <li>3. 검색량과 경쟁도 참고하여 키워드 선정</li>
+                    </ul>
+
+                    <h3>📈 결과 해석하기</h3>
+                    <ul>
+                        <li><strong>블로그 지수:</strong> 0~100 사이의 점수로 블로그 영향력 표시</li>
+                        <li><strong>검색 노출:</strong> 해당 키워드로 상위 노출 가능성</li>
+                        <li><strong>경쟁도:</strong> 낮을수록 상위 노출이 쉬움</li>
+                    </ul>
+
+                    <h3>💡 활용 팁</h3>
+                    <ul>
+                        <li>주기적으로 블로그 지수 변화 확인</li>
+                        <li>글 발행 전 키워드 경쟁도 체크</li>
+                        <li>AI 코칭 내용을 바탕으로 글 수정</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>분석 결과를 참고하되, 가장 중요한 것은 꾸준한 양질의 콘텐츠 발행입니다!</p>
+                    </div>
+                `
+            }
+        };
+
+        // 가이드 모달 표시
+        function showGuide(guideId) {
+            const guide = guideContents[guideId];
+            if (!guide) return;
+
+            document.getElementById('guideModalTitle').innerHTML = guide.title;
+            document.getElementById('guideModalBody').innerHTML = guide.content;
+            document.getElementById('guideModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            closeSlideMenu();
+        }
+
+        // 가이드 모달 닫기
+        function closeGuideModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('guideModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ESC 키로 모달/메뉴 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSlideMenu();
+                closeGuideModal();
+            }
+        });
+
         // =====================================================
         // 테마 관리 (다크/라이트 모드)
         // =====================================================
