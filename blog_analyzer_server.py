@@ -6339,6 +6339,31 @@ def index():
             </div>
         </div>
 
+        <!-- 크롬 확장 프로그램 배너 -->
+        <a href="/extension" class="extension-banner" style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%);
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.background='linear-gradient(135deg, rgba(102,126,234,0.25) 0%, rgba(118,75,162,0.25) 100%)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%)'; this.style.transform='translateY(0)';">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 28px;">🧩</span>
+                <div>
+                    <div style="color: #e0e0e0; font-weight: 600; font-size: 14px;">크롬 확장 프로그램 출시!</div>
+                    <div style="color: #888; font-size: 12px;">내 블로그 방문자 통계를 한눈에 확인하세요</div>
+                </div>
+            </div>
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;">
+                설치하기 →
+            </div>
+        </a>
+
         <!-- 트렌드 키워드 섹션 -->
         <div id="trendsSection" class="trends-section">
             <div class="trends-header">
@@ -6399,6 +6424,7 @@ def index():
                 </ul>
             </div>
             <div class="footer-links">
+                <a href="/extension" style="color: #667eea;">🧩 크롬 확장 프로그램</a>
                 <a href="/privacy">개인정보처리방침</a>
                 <a href="/terms">이용약관</a>
                 <a href="/disclaimer">면책조항</a>
