@@ -1497,6 +1497,15 @@ def keyword_suggest():
         return jsonify({'suggestions': [], 'error': str(e)})
 
 
+# ads.txt (광고 인증)
+@app.route('/ads.txt')
+def ads_txt():
+    """ads.txt for ad verification"""
+    content = """google.com, pub-3955152413866694, DIRECT, f08c47fec0942fa0
+kakao.com, pub-4939783373620498, DIRECT"""
+    return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
 # HTML 페이지 (프론트엔드)
 @app.route('/')
 def index():
