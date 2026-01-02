@@ -1506,6 +1506,12 @@ kakao.com, pub-4939783373620498, DIRECT"""
     return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
+@app.route('/google14d6946e204296a4.html')
+def google_verification():
+    """Google Search Console verification"""
+    return 'google-site-verification: google14d6946e204296a4.html', 200, {'Content-Type': 'text/html; charset=utf-8'}
+
+
 # HTML 페이지 (프론트엔드)
 @app.route('/')
 def index():
@@ -1942,6 +1948,41 @@ def index():
 
         .post-index-table tbody tr:hover {
             background: rgba(255,255,255,0.03);
+        }
+
+        /* 게시글 진단 테이블 스타일 */
+        .post-diagnosis-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .post-diagnosis-table thead {
+            background: rgba(102, 126, 234, 0.1);
+            position: sticky;
+            top: 0;
+        }
+
+        .post-diagnosis-table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .post-diagnosis-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            vertical-align: middle;
+        }
+
+        .post-diagnosis-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .post-diagnosis-table .post-title-link {
+            max-width: 280px;
         }
 
         .post-title-link {
@@ -6144,6 +6185,61 @@ def index():
 
                     <!-- 포스팅 지수 테이블 -->
                     ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
+                    <!-- 게시글 진단 섹션 -->
+                    <div class="section-card">
+                        <h3 class="section-title">📋 게시글 진단 <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                            💡 <strong>진단 결과:</strong> 누락 상태인 글은 네이버 검색에서 제외된 상태입니다. 최적화 점수 70점 이상을 목표로 하세요.
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="post-diagnosis-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 35%;">제목</th>
+                                        <th style="width: 12%;">누락여부</th>
+                                        <th style="width: 23%;">상위노출 키워드</th>
+                                        <th style="width: 15%;">최적화 점수</th>
+                                        <th style="width: 15%;">발행일</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.posts_with_index.map(function(post, idx) {
+                                        const score = calculatePostScore(post);
+                                        const scoreColor = score >= 80 ? '#00C853' : score >= 60 ? '#667eea' : score >= 40 ? '#FFC107' : '#F44336';
+                                        const scoreLabel = score >= 80 ? '우수' : score >= 60 ? '양호' : score >= 40 ? '보통' : '개선필요';
+
+                                        // 누락여부 상태
+                                        const missingStatus = post.exposure === 'indexed' ? '<span style="color: #00C853; font-weight: 600;">정상</span>' :
+                                                             post.exposure === 'missing' ? '<span style="color: #F44336; font-weight: 600;">누락</span>' :
+                                                             '<span style="color: #FFC107; font-weight: 600;">확인중</span>';
+
+                                        // 상위노출 키워드 (첫번째 + 외 N개)
+                                        const postKeywords = getPostKeywords(post, 5);
+                                        let keywordsDisplay = '-';
+                                        if (postKeywords.length > 0) {
+                                            if (postKeywords.length === 1) {
+                                                keywordsDisplay = '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px;">' + postKeywords[0] + '</span>';
+                                            } else {
+                                                keywordsDisplay = '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px;">' + postKeywords[0] + '</span> <span style="color: rgba(255,255,255,0.5); font-size: 11px;">외 ' + (postKeywords.length - 1) + '개</span>';
+                                            }
+                                        }
+
+                                        // 발행일 포맷
+                                        const dateDisplay = formatRelativeDate(post.date);
+
+                                        return '<tr>' +
+                                            '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + (post.title || '') + '">' + (post.title || '제목 없음') + '</a></td>' +
+                                            '<td style="text-align: center;">' + missingStatus + '</td>' +
+                                            '<td style="text-align: left;">' + keywordsDisplay + '</td>' +
+                                            '<td style="text-align: center;"><span style="background: ' + scoreColor + '20; color: ' + scoreColor + '; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">' + scoreLabel + ' ' + score + '점</span></td>' +
+                                            '<td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px;">' + dateDisplay + '</td>' +
+                                        '</tr>';
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- 형태소 분석 섹션 -->
                     <div class="section-card">
                         <h3 class="section-title">📝 형태소 분석 <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 제목에서 자주 사용하는 키워드</span></h3>
