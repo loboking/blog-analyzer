@@ -1626,6 +1626,141 @@ def get_recent_blogs():
         return jsonify({'success': False, 'error': str(e), 'blogs': []}), 500
 
 
+# =====================================================
+# 커뮤니티 API
+# =====================================================
+
+@app.route('/api/community/posts', methods=['GET'])
+def get_community_posts():
+    """커뮤니티 게시글 목록 조회"""
+    if not SUPABASE_KEY:
+        return jsonify({'success': False, 'posts': [], 'total': 0, 'page': 1})
+
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        category = request.args.get('category', '')
+
+        offset = (page - 1) * limit
+
+        # 게시글 조회
+        params = {
+            'select': '*',
+            'order': 'created_at.desc',
+            'offset': str(offset),
+            'limit': str(limit)
+        }
+
+        if category and category != 'all':
+            params['category'] = f'eq.{category}'
+
+        result = supabase_request('GET', 'community_posts', params=params)
+
+        # 전체 개수 조회
+        count_params = {'select': 'id'}
+        if category and category != 'all':
+            count_params['category'] = f'eq.{category}'
+        count_result = supabase_request('GET', 'community_posts', params=count_params)
+        total = len(count_result) if count_result else 0
+
+        return jsonify({
+            'success': True,
+            'posts': result or [],
+            'total': total,
+            'page': page
+        })
+
+    except Exception as e:
+        print(f"Get community posts error: {e}")
+        return jsonify({'success': False, 'posts': [], 'total': 0, 'page': 1, 'error': str(e)})
+
+
+@app.route('/api/community/posts', methods=['POST'])
+def create_community_post():
+    """커뮤니티 게시글 작성"""
+    if not SUPABASE_KEY:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨'})
+
+    try:
+        data = request.json
+        nickname = data.get('nickname', '익명')[:20]
+        category = data.get('category', 'question')
+        title = data.get('title', '')[:100]
+        content = data.get('content', '')[:5000]
+
+        if not title or not content:
+            return jsonify({'success': False, 'error': '제목과 내용을 입력해주세요.'})
+
+        # 게시글 저장
+        post_data = {
+            'nickname': nickname,
+            'category': category,
+            'title': title,
+            'content': content,
+            'likes': 0,
+            'comments': 0
+        }
+
+        result = supabase_request('POST', 'community_posts', data=post_data)
+
+        if result:
+            return jsonify({'success': True, 'post': result[0] if isinstance(result, list) else result})
+        else:
+            return jsonify({'success': False, 'error': '게시글 저장 실패'})
+
+    except Exception as e:
+        print(f"Create community post error: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/community/posts/<int:post_id>')
+def get_community_post(post_id):
+    """커뮤니티 게시글 상세 조회"""
+    if not SUPABASE_KEY:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨'})
+
+    try:
+        params = {
+            'select': '*',
+            'id': f'eq.{post_id}'
+        }
+        result = supabase_request('GET', 'community_posts', params=params)
+
+        if result and len(result) > 0:
+            return jsonify({'success': True, 'post': result[0]})
+        else:
+            return jsonify({'success': False, 'error': '게시글을 찾을 수 없습니다.'})
+
+    except Exception as e:
+        print(f"Get community post error: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/community/posts/<int:post_id>/like', methods=['POST'])
+def like_community_post(post_id):
+    """커뮤니티 게시글 좋아요"""
+    if not SUPABASE_KEY:
+        return jsonify({'success': False, 'error': 'DB 연결 안됨'})
+
+    try:
+        # 현재 좋아요 수 조회
+        params = {'select': 'likes', 'id': f'eq.{post_id}'}
+        result = supabase_request('GET', 'community_posts', params=params)
+
+        if result and len(result) > 0:
+            current_likes = result[0].get('likes', 0)
+            # 좋아요 증가
+            update_data = {'likes': current_likes + 1}
+            supabase_request('PATCH', f'community_posts?id=eq.{post_id}', data=update_data)
+            return jsonify({'success': True, 'likes': current_likes + 1})
+        else:
+            return jsonify({'success': False, 'error': '게시글을 찾을 수 없습니다.'})
+
+    except Exception as e:
+        print(f"Like community post error: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
 # ads.txt (광고 인증)
 @app.route('/ads.txt')
 def ads_txt():
@@ -3826,19 +3961,29 @@ def index():
             color: rgba(0, 0, 0, 0.4);
         }
 
-        .accordion-content {
+        .slide-menu .accordion-content {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
             background: rgba(0, 0, 0, 0.2);
+            padding: 0 !important;
         }
 
-        .accordion-content.active {
+        .slide-menu .accordion-content.active {
             max-height: 500px;
+            padding: 8px 0 !important;
         }
 
-        .light-mode .accordion-content {
+        .light-mode .slide-menu .accordion-content {
             background: rgba(0, 0, 0, 0.03);
+        }
+
+        .slide-menu .accordion-header {
+            cursor: pointer;
+        }
+
+        .slide-menu .accordion-header.active .accordion-arrow {
+            transform: rotate(180deg);
         }
 
         .submenu-item {
@@ -4052,6 +4197,439 @@ def index():
             font-size: 13px !important;
         }
 
+        /* 커뮤니티 모달 */
+        .community-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .community-modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .community-modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+        }
+
+        .light-mode .community-modal-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .community-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            background: inherit;
+            z-index: 10;
+        }
+
+        .community-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .light-mode .community-title {
+            color: #1a1a2e;
+        }
+
+        .community-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .community-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .light-mode .community-close {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .light-mode .community-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1a1a2e;
+        }
+
+        /* 커뮤니티 탭 */
+        .community-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .community-tab {
+            padding: 8px 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .community-tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .community-tab.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        .light-mode .community-tab {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .light-mode .community-tab.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        /* 글쓰기 폼 */
+        .community-write-form {
+            margin: 16px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .light-mode .community-write-form {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .write-form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .light-mode .write-form-header {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .write-form-arrow {
+            transition: transform 0.3s;
+        }
+
+        .write-form-body {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .light-mode .write-form-body {
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .write-form-body input,
+        .write-form-body select,
+        .write-form-body textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .light-mode .write-form-body input,
+        .light-mode .write-form-body select,
+        .light-mode .write-form-body textarea {
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            background: #fff;
+            color: #1a1a2e;
+        }
+
+        .write-form-body input::placeholder,
+        .write-form-body textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .light-mode .write-form-body input::placeholder,
+        .light-mode .write-form-body textarea::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .write-form-body textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .post-submit-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .post-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        /* 게시글 목록 */
+        .community-posts {
+            padding: 16px 24px;
+        }
+
+        .loading-posts {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 40px;
+        }
+
+        .light-mode .loading-posts {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .post-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .post-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .light-mode .post-item {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .light-mode .post-item:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .post-category {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .post-category.question {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ffb74d;
+        }
+
+        .post-category.info {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+
+        .post-category.diary {
+            background: rgba(156, 39, 176, 0.2);
+            color: #ba68c8;
+        }
+
+        .post-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .light-mode .post-title {
+            color: #1a1a2e;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .light-mode .post-meta {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .no-posts {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .light-mode .no-posts {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* 페이지네이션 */
+        .community-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 24px 24px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        .light-mode .page-btn {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .light-mode .page-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        /* 커뮤니티 플로팅 버튼 */
+        .community-float-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .community-float-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .float-icon {
+            font-size: 28px;
+        }
+
+        .float-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .community-float-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 54px;
+                height: 54px;
+            }
+
+            .float-icon {
+                font-size: 24px;
+            }
+
+            .community-modal-content {
+                margin-top: 10px;
+                max-height: 95vh;
+            }
+
+            .community-tabs {
+                padding: 12px 16px;
+            }
+
+            .community-write-form {
+                margin: 12px 16px;
+            }
+
+            .community-posts {
+                padding: 12px 16px;
+            }
+        }
+
         /* 헤더 레이아웃 조정 */
         header {
             display: flex;
@@ -4134,6 +4712,14 @@ def index():
                         <span class="submenu-dot"></span>
                         <span>롱테일 키워드란?</span>
                     </div>
+                    <div class="submenu-item" onclick="showGuide('keyword-placement')">
+                        <span class="submenu-dot"></span>
+                        <span>키워드 배치 전략</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('trend-keyword')">
+                        <span class="submenu-dot"></span>
+                        <span>시즌/트렌드 키워드</span>
+                    </div>
                 </div>
             </div>
 
@@ -4147,6 +4733,14 @@ def index():
                     <span class="accordion-arrow">▼</span>
                 </div>
                 <div class="accordion-content">
+                    <div class="submenu-item" onclick="showGuide('c-rank')">
+                        <span class="submenu-dot"></span>
+                        <span>C-Rank 알고리즘</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('optimization')">
+                        <span class="submenu-dot"></span>
+                        <span>최적화 블로그 만들기</span>
+                    </div>
                     <div class="submenu-item" onclick="showGuide('seo')">
                         <span class="submenu-dot"></span>
                         <span>SEO 최적화 방법</span>
@@ -4159,7 +4753,22 @@ def index():
                         <span class="submenu-dot"></span>
                         <span>이미지 최적화</span>
                     </div>
+                    <div class="submenu-item" onclick="showGuide('posting-strategy')">
+                        <span class="submenu-dot"></span>
+                        <span>꾸준한 포스팅 전략</span>
+                    </div>
+                    <div class="submenu-item" onclick="showGuide('avoid-lowquality')">
+                        <span class="submenu-dot"></span>
+                        <span>저품질 피하는 방법</span>
+                    </div>
                 </div>
+            </div>
+
+            <!-- 커뮤니티 -->
+            <div class="menu-item" onclick="openCommunity()">
+                <span class="menu-item-icon">💬</span>
+                <span>커뮤니티</span>
+                <span style="margin-left: auto; background: #4CAF50; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">NEW</span>
             </div>
 
             <!-- 사용법 -->
@@ -4182,6 +4791,57 @@ def index():
             </div>
         </div>
     </div>
+
+    <!-- 커뮤니티 모달 -->
+    <div class="community-modal" id="communityModal" onclick="closeCommunity(event)">
+        <div class="community-modal-content" onclick="event.stopPropagation()">
+            <div class="community-header">
+                <div class="community-title">💬 블로거 커뮤니티</div>
+                <button class="community-close" onclick="closeCommunity()">&times;</button>
+            </div>
+
+            <!-- 카테고리 탭 -->
+            <div class="community-tabs">
+                <button class="community-tab active" onclick="switchCommunityTab('all')">전체</button>
+                <button class="community-tab" onclick="switchCommunityTab('question')">질문</button>
+                <button class="community-tab" onclick="switchCommunityTab('info')">정보공유</button>
+                <button class="community-tab" onclick="switchCommunityTab('diary')">성장일기</button>
+            </div>
+
+            <!-- 글쓰기 폼 -->
+            <div class="community-write-form" id="communityWriteForm">
+                <div class="write-form-header" onclick="toggleWriteForm()">
+                    <span>✏️ 새 글 작성하기</span>
+                    <span class="write-form-arrow">▼</span>
+                </div>
+                <div class="write-form-body" style="display: none;">
+                    <input type="text" id="postNickname" placeholder="닉네임 (익명 가능)" maxlength="20">
+                    <select id="postCategory">
+                        <option value="question">질문</option>
+                        <option value="info">정보공유</option>
+                        <option value="diary">성장일기</option>
+                    </select>
+                    <input type="text" id="postTitle" placeholder="제목을 입력하세요" maxlength="100">
+                    <textarea id="postContent" placeholder="내용을 입력하세요 (마크다운 지원)" rows="5"></textarea>
+                    <button class="post-submit-btn" onclick="submitPost()">작성하기</button>
+                </div>
+            </div>
+
+            <!-- 게시글 목록 -->
+            <div class="community-posts" id="communityPosts">
+                <div class="loading-posts">게시글을 불러오는 중...</div>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="community-pagination" id="communityPagination"></div>
+        </div>
+    </div>
+
+    <!-- 커뮤니티 플로팅 버튼 -->
+    <button class="community-float-btn" onclick="openCommunity()" title="커뮤니티">
+        <span class="float-icon">💬</span>
+        <span class="float-badge" id="communityBadge" style="display: none;">0</span>
+    </button>
 
     <!-- 사이드바 광고 (160x600) - PC에서만 표시 -->
     <div class="ad-sidebar ad-sidebar-right">
@@ -4584,6 +5244,258 @@ def index():
                         <p>분석 결과를 참고하되, 가장 중요한 것은 꾸준한 양질의 콘텐츠 발행입니다!</p>
                     </div>
                 `
+            },
+            'keyword-placement': {
+                title: '📍 키워드 배치 전략',
+                content: `
+                    <h3>🎯 키워드 배치의 핵심</h3>
+                    <p>키워드는 <strong>자연스럽게</strong> 배치하는 것이 중요합니다. 과도한 반복은 저품질 판정의 원인이 됩니다.</p>
+
+                    <h3>📝 제목에 키워드 배치</h3>
+                    <ul>
+                        <li><strong>핵심 키워드는 제목 앞쪽에</strong> - 검색 결과에서 먼저 보임</li>
+                        <li>제목 길이: <strong>25~45자</strong> 권장</li>
+                        <li>자연스러운 문장 형태 유지</li>
+                    </ul>
+
+                    <h3>📄 본문 키워드 배치</h3>
+                    <ul>
+                        <li><strong>첫 문단:</strong> 핵심 키워드 1회 자연스럽게 포함</li>
+                        <li><strong>소제목(H2/H3):</strong> 키워드 변형 활용</li>
+                        <li><strong>본문 중간:</strong> 300~500자마다 관련 키워드 언급</li>
+                        <li><strong>마지막 문단:</strong> 핵심 키워드로 마무리</li>
+                    </ul>
+
+                    <h3>🏷 태그 활용</h3>
+                    <ul>
+                        <li>핵심 키워드를 첫 번째 태그로</li>
+                        <li>연관 키워드 5~10개 추가</li>
+                        <li>롱테일 키워드도 태그에 포함</li>
+                    </ul>
+
+                    <h3>⚠️ 주의사항</h3>
+                    <ul>
+                        <li>❌ 같은 키워드 5회 이상 반복 금지</li>
+                        <li>❌ 키워드만 나열하는 문장 금지</li>
+                        <li>❌ 내용과 관련 없는 키워드 삽입 금지</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>키워드 밀도는 본문의 1~2% 정도가 적당합니다. 독자가 읽었을 때 어색하지 않은 수준을 유지하세요!</p>
+                    </div>
+                `
+            },
+            'trend-keyword': {
+                title: '📅 시즌/트렌드 키워드',
+                content: `
+                    <h3>📈 트렌드 키워드란?</h3>
+                    <p>특정 시기나 이슈에 따라 검색량이 급증하는 키워드입니다. 타이밍을 맞추면 폭발적인 유입이 가능합니다.</p>
+
+                    <h3>🗓 시즌 키워드 예시</h3>
+                    <ul>
+                        <li><strong>1~2월:</strong> 새해 계획, 다이어트, 졸업선물</li>
+                        <li><strong>3~4월:</strong> 벚꽃명소, 신학기, 봄옷 코디</li>
+                        <li><strong>5~6월:</strong> 어버이날, 스승의날, 여름휴가</li>
+                        <li><strong>7~8월:</strong> 피서지, 물놀이, 에어컨</li>
+                        <li><strong>9~10월:</strong> 추석, 단풍, 가을여행</li>
+                        <li><strong>11~12월:</strong> 크리스마스, 연말정산, 송년회</li>
+                    </ul>
+
+                    <h3>⚡ 실시간 트렌드 활용</h3>
+                    <ul>
+                        <li><strong>네이버 실검:</strong> 실시간 급상승 검색어 확인</li>
+                        <li><strong>구글 트렌드:</strong> 키워드 트렌드 분석</li>
+                        <li><strong>SNS 해시태그:</strong> 인스타/트위터 인기 해시태그</li>
+                    </ul>
+
+                    <h3>🎯 트렌드 키워드 전략</h3>
+                    <ul>
+                        <li><strong>2~3주 전 선점:</strong> 시즌 키워드는 미리 포스팅</li>
+                        <li><strong>빠른 대응:</strong> 이슈 키워드는 24시간 내 발행</li>
+                        <li><strong>차별화:</strong> 같은 주제라도 독특한 관점 제시</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>시즌 키워드는 미리 캘린더에 기록해두고, 2~3주 전부터 준비하세요. 선점 효과가 매우 큽니다!</p>
+                    </div>
+                `
+            },
+            'c-rank': {
+                title: '🏆 C-Rank 알고리즘 이해하기',
+                content: `
+                    <h3>🔍 C-Rank란?</h3>
+                    <p>네이버의 <strong>Creator Rank</strong> 알고리즘으로, 블로그의 신뢰도와 전문성을 평가하여 검색 순위에 반영합니다.</p>
+
+                    <h3>📊 C-Rank 평가 요소</h3>
+                    <ul>
+                        <li><strong>주제 전문성 (40%):</strong> 특정 분야에 대한 깊이 있는 콘텐츠</li>
+                        <li><strong>활동 지속성 (30%):</strong> 꾸준한 포스팅 빈도</li>
+                        <li><strong>사용자 반응 (20%):</strong> 공감, 댓글, 체류 시간</li>
+                        <li><strong>콘텐츠 품질 (10%):</strong> 글자수, 이미지, 구성</li>
+                    </ul>
+
+                    <h3>🎯 C-Rank 높이는 방법</h3>
+                    <ul>
+                        <li><strong>주제 집중:</strong> 1~2개 주제에 집중하여 전문성 확보</li>
+                        <li><strong>꾸준한 포스팅:</strong> 주 3~5회 정기적 발행</li>
+                        <li><strong>양질의 콘텐츠:</strong> 2,500자 이상, 이미지 6~13개</li>
+                        <li><strong>독자 소통:</strong> 댓글 답변, 공감 유도</li>
+                    </ul>
+
+                    <h3>⚠️ C-Rank에 불리한 행동</h3>
+                    <ul>
+                        <li>❌ 여러 주제를 무분별하게 다루기</li>
+                        <li>❌ 불규칙한 포스팅 (한 달에 1~2개)</li>
+                        <li>❌ 짧은 글, 이미지 없는 글</li>
+                        <li>❌ 복사/붙여넣기 콘텐츠</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>C-Rank는 단기간에 올리기 어렵습니다. 최소 3개월 이상 꾸준히 양질의 콘텐츠를 발행해야 효과를 볼 수 있습니다!</p>
+                    </div>
+                `
+            },
+            'optimization': {
+                title: '⚡ 최적화 블로그 만들기',
+                content: `
+                    <h3>📏 업계 표준 기준 (2024~2025)</h3>
+                    <p>블로그 최적화를 위한 <strong>업계 권장 기준</strong>을 정리했습니다.</p>
+
+                    <h3>📝 글자수 기준</h3>
+                    <ul>
+                        <li><strong>최소:</strong> 1,500자 이상</li>
+                        <li><strong>권장:</strong> 2,500~3,000자</li>
+                        <li><strong>최적:</strong> 2,800자 (공백 미포함)</li>
+                    </ul>
+
+                    <h3>🖼 이미지 기준</h3>
+                    <ul>
+                        <li><strong>정보성 포스팅:</strong> 6~13개</li>
+                        <li><strong>리뷰 포스팅:</strong> 10~20개</li>
+                        <li><strong>300~500자마다:</strong> 이미지 1장 배치</li>
+                    </ul>
+
+                    <h3>📑 소제목(H2/H3) 기준</h3>
+                    <ul>
+                        <li><strong>권장:</strong> 4~5개 이상</li>
+                        <li><strong>구성:</strong> 주제를 4~5가지로 분류</li>
+                        <li><strong>효과:</strong> 가독성 향상 + 스니펫 노출</li>
+                    </ul>
+
+                    <h3>📊 최적화 점수 체크리스트</h3>
+                    <table style="width:100%; border-collapse: collapse; margin: 10px 0;">
+                        <tr style="background: rgba(76,175,80,0.2);">
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">항목</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">기준</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">배점</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">제목</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">25~45자</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">15점</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">이미지</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">6~13개</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">20점</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">본문</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">2,500자+</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">25점</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">소제목</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">4개+</td>
+                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">15점</td>
+                        </tr>
+                    </table>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>기준을 맞추는 것도 중요하지만, 독자에게 실질적인 가치를 제공하는 것이 최우선입니다!</p>
+                    </div>
+                `
+            },
+            'posting-strategy': {
+                title: '📅 꾸준한 포스팅 전략',
+                content: `
+                    <h3>⏰ 최적의 포스팅 빈도</h3>
+                    <ul>
+                        <li><strong>초보자:</strong> 주 3회 이상</li>
+                        <li><strong>중급자:</strong> 주 5회 이상</li>
+                        <li><strong>최적화 목표:</strong> 매일 1포스팅</li>
+                    </ul>
+
+                    <h3>🕐 최적의 발행 시간</h3>
+                    <ul>
+                        <li><strong>평일:</strong> 오전 7~9시, 점심 12~1시, 저녁 6~8시</li>
+                        <li><strong>주말:</strong> 오전 10~12시</li>
+                        <li><strong>타겟 독자의 활동 시간 고려</strong></li>
+                    </ul>
+
+                    <h3>📋 콘텐츠 플래닝</h3>
+                    <ul>
+                        <li><strong>월간 계획:</strong> 한 달 치 주제 미리 선정</li>
+                        <li><strong>주간 계획:</strong> 요일별 카테고리 지정</li>
+                        <li><strong>시즌 준비:</strong> 2~3주 전 시즌 콘텐츠 발행</li>
+                    </ul>
+
+                    <h3>🔄 지속 가능한 루틴 만들기</h3>
+                    <ul>
+                        <li>글감 아이디어 수시로 메모</li>
+                        <li>이미지/자료는 미리 수집</li>
+                        <li>예약 발행 기능 적극 활용</li>
+                        <li>번아웃 방지를 위한 버퍼 글 확보</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>양보다 질! 무리하게 매일 발행하다 지치는 것보다, 꾸준히 양질의 글을 발행하는 것이 중요합니다.</p>
+                    </div>
+                `
+            },
+            'avoid-lowquality': {
+                title: '🚫 저품질 피하는 방법',
+                content: `
+                    <h3>⚠️ 저품질 블로그란?</h3>
+                    <p>네이버가 <strong>품질이 낮다고 판단한 블로그</strong>로, 검색 결과에서 노출이 급격히 감소합니다.</p>
+
+                    <h3>❌ 저품질 판정 원인</h3>
+                    <ul>
+                        <li><strong>복사/붙여넣기:</strong> 다른 글 그대로 복사</li>
+                        <li><strong>키워드 남용:</strong> 같은 키워드 과도한 반복</li>
+                        <li><strong>어뷰징:</strong> 클릭 유도, 허위 정보</li>
+                        <li><strong>무의미한 글:</strong> 짧고 내용 없는 포스팅</li>
+                        <li><strong>과도한 광고:</strong> 광고성 글만 발행</li>
+                        <li><strong>매크로 사용:</strong> 자동화 도구 사용</li>
+                    </ul>
+
+                    <h3>✅ 저품질 예방 수칙</h3>
+                    <ul>
+                        <li><strong>100% 직접 작성:</strong> 복사 금지, 직접 쓰기</li>
+                        <li><strong>키워드 자연스럽게:</strong> 본문의 1~2% 이내</li>
+                        <li><strong>충분한 내용:</strong> 1,500자 이상 작성</li>
+                        <li><strong>직접 촬영 이미지:</strong> 저작권 문제 없는 이미지</li>
+                        <li><strong>정확한 정보:</strong> 팩트 체크 필수</li>
+                    </ul>
+
+                    <h3>🔄 저품질 탈출 방법</h3>
+                    <ul>
+                        <li>문제 있는 글 삭제 또는 수정</li>
+                        <li>2~3주간 양질의 글 꾸준히 발행</li>
+                        <li>독자와 적극적으로 소통</li>
+                        <li>주제 일관성 유지</li>
+                    </ul>
+
+                    <div class="guide-tip">
+                        <div class="guide-tip-title">💡 TIP</div>
+                        <p>저품질에 걸리면 회복에 최소 2~4주가 소요됩니다. 예방이 최선입니다!</p>
+                    </div>
+                `
             }
         };
 
@@ -4612,8 +5524,189 @@ def index():
             if (e.key === 'Escape') {
                 closeSlideMenu();
                 closeGuideModal();
+                closeCommunity();
             }
         });
+
+        // =====================================================
+        // 커뮤니티 기능
+        // =====================================================
+        let currentCommunityTab = 'all';
+        let communityPage = 1;
+        const postsPerPage = 10;
+
+        function openCommunity() {
+            document.getElementById('communityModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            closeSlideMenu();
+            loadCommunityPosts();
+        }
+
+        function closeCommunity(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('communityModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function toggleWriteForm() {
+            const body = document.querySelector('.write-form-body');
+            const arrow = document.querySelector('.write-form-arrow');
+            if (body.style.display === 'none') {
+                body.style.display = 'flex';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                body.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function switchCommunityTab(tab) {
+            currentCommunityTab = tab;
+            communityPage = 1;
+
+            // 탭 UI 업데이트
+            document.querySelectorAll('.community-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            loadCommunityPosts();
+        }
+
+        async function loadCommunityPosts() {
+            const container = document.getElementById('communityPosts');
+            container.innerHTML = '<div class="loading-posts">게시글을 불러오는 중...</div>';
+
+            try {
+                let url = '/api/community/posts?page=' + communityPage + '&limit=' + postsPerPage;
+                if (currentCommunityTab !== 'all') {
+                    url += '&category=' + currentCommunityTab;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.posts && data.posts.length > 0) {
+                    const categoryNames = {
+                        'question': '질문',
+                        'info': '정보공유',
+                        'diary': '성장일기'
+                    };
+
+                    container.innerHTML = data.posts.map(post => `
+                        <div class="post-item" onclick="viewPost(${post.id})">
+                            <span class="post-category ${post.category}">${categoryNames[post.category] || post.category}</span>
+                            <div class="post-title">${escapeHtml(post.title)}</div>
+                            <div class="post-meta">
+                                <span>${post.nickname || '익명'}</span>
+                                <span>${formatDate(post.created_at)}</span>
+                                <div class="post-stats">
+                                    <span>👍 ${post.likes || 0}</span>
+                                    <span>💬 ${post.comments || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // 페이지네이션 렌더링
+                    renderPagination(data.total, data.page);
+                } else {
+                    container.innerHTML = `
+                        <div class="no-posts">
+                            <p>아직 게시글이 없습니다.</p>
+                            <p style="font-size: 12px; margin-top: 8px;">첫 번째 글을 작성해보세요!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Community load error:', error);
+                container.innerHTML = '<div class="no-posts">게시글을 불러올 수 없습니다.</div>';
+            }
+        }
+
+        function renderPagination(total, currentPage) {
+            const container = document.getElementById('communityPagination');
+            const totalPages = Math.ceil(total / postsPerPage);
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            communityPage = page;
+            loadCommunityPosts();
+        }
+
+        async function submitPost() {
+            const nickname = document.getElementById('postNickname').value.trim() || '익명';
+            const category = document.getElementById('postCategory').value;
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+
+            if (!title) {
+                alert('제목을 입력해주세요.');
+                return;
+            }
+            if (!content) {
+                alert('내용을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/community/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname, category, title, content })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('게시글이 작성되었습니다!');
+                    // 폼 초기화
+                    document.getElementById('postNickname').value = '';
+                    document.getElementById('postTitle').value = '';
+                    document.getElementById('postContent').value = '';
+                    toggleWriteForm();
+                    loadCommunityPosts();
+                } else {
+                    alert(data.error || '게시글 작성에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('게시글 작성 중 오류가 발생했습니다.');
+            }
+        }
+
+        function viewPost(postId) {
+            // 게시글 상세 보기 (추후 구현)
+            alert('게시글 상세 보기 기능은 준비 중입니다.');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return '방금 전';
+            if (diff < 3600000) return Math.floor(diff / 60000) + '분 전';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '시간 전';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + '일 전';
+
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         // =====================================================
         // 테마 관리 (다크/라이트 모드)
@@ -6848,33 +7941,34 @@ def index():
         }
 
         function calculatePostScore(post) {
-            let score = 0; // 기본 점수 0점 (엄격한 평가)
+            let score = 0; // 기본 점수 0점 (업계 기준 엄격한 평가)
 
-            // 제목 점수 (최대 20점)
+            // 제목 점수 (최대 15점) - 25-45자 최적
             const titleLen = (post.title || '').length;
-            if (titleLen >= 25 && titleLen <= 45) score += 20;
-            else if (titleLen >= 20 && titleLen <= 50) score += 12;
+            if (titleLen >= 25 && titleLen <= 45) score += 15;
+            else if (titleLen >= 20 && titleLen <= 50) score += 10;
             else if (titleLen >= 15) score += 5;
             // 15자 미만은 0점
 
-            // 이미지 점수 (최대 20점)
+            // 이미지 점수 (최대 20점) - 업계 기준 6-13개 최적
             const images = post.images || 0;
-            if (images >= 5 && images <= 15) score += 20;
-            else if (images >= 3 && images <= 20) score += 12;
-            else if (images >= 1) score += 5;
-            // 0개는 0점
+            if (images >= 6 && images <= 13) score += 20;
+            else if (images >= 4 && images <= 18) score += 12;
+            else if (images >= 2) score += 5;
+            // 1개 이하는 0점
 
-            // 본문 점수 (최대 25점)
+            // 본문 점수 (최대 25점) - 업계 기준 2,500-3,000자 권장
             const charCount = post.char_count || 0;
-            if (charCount >= 3000) score += 25;
+            if (charCount >= 2500) score += 25;
             else if (charCount >= 2000) score += 18;
-            else if (charCount >= 1500) score += 12;
-            else if (charCount >= 1000) score += 6;
+            else if (charCount >= 1500) score += 10;
+            else if (charCount >= 1000) score += 5;
             // 1000자 미만은 0점
 
-            // 소제목 점수 (최대 10점)
+            // 소제목 점수 (최대 15점) - 업계 기준 4-5개 권장
             const subheadings = post.subheading_count || 0;
-            if (subheadings >= 3) score += 10;
+            if (subheadings >= 4) score += 15;
+            else if (subheadings >= 3) score += 10;
             else if (subheadings >= 2) score += 6;
             else if (subheadings >= 1) score += 3;
 
@@ -6896,24 +7990,32 @@ def index():
             const issues = [];
             const goods = [];
 
-            // 제목 체크
-            if ((post.title || '').length < 15) issues.push('제목을 20자 이상으로 늘려주세요');
-            else goods.push('제목 길이 적절');
+            // 제목 체크 (업계 기준: 25-45자)
+            const titleLen = (post.title || '').length;
+            if (titleLen < 20) issues.push('제목을 25자 이상으로 늘려주세요');
+            else if (titleLen >= 25 && titleLen <= 45) goods.push('제목 길이 적절');
+            else if (titleLen > 50) issues.push('제목이 너무 깁니다 (45자 이내 권장)');
+            else goods.push('제목 길이 양호');
 
             if (!titleAnalysis.keywordIncluded && post.keyword) issues.push('제목에 핵심 키워드 포함 권장');
 
-            // 이미지 체크
-            if ((post.images || 0) < 3) issues.push('이미지를 3개 이상 추가하세요');
-            else goods.push('이미지 수 충분');
+            // 이미지 체크 (업계 기준: 6-13개)
+            const images = post.images || 0;
+            if (images < 6) issues.push('이미지를 6개 이상 추가하세요');
+            else if (images > 13) issues.push('이미지가 많습니다 (6-13개 권장)');
+            else goods.push('이미지 수 적절');
 
-            // 본문 체크 (새로 추가)
+            // 본문 체크 (업계 기준: 2,500자 이상)
             const charCount = post.char_count || 0;
-            if (charCount < 1000) issues.push('본문을 1,500자 이상으로 보강하세요');
-            else if (charCount >= 1500) goods.push('본문 분량 충분');
+            if (charCount < 1500) issues.push('본문을 2,500자 이상으로 보강하세요');
+            else if (charCount < 2500) issues.push('본문 2,500자 이상 권장');
+            else goods.push('본문 분량 충분');
 
-            // 소제목 체크 (새로 추가)
-            if ((post.subheading_count || 0) === 0) issues.push('소제목을 추가하여 가독성 높이기');
-            else if ((post.subheading_count || 0) >= 2) goods.push('소제목 구성 적절');
+            // 소제목 체크 (업계 기준: 4-5개)
+            const subheadings = post.subheading_count || 0;
+            if (subheadings === 0) issues.push('소제목(H2/H3)을 추가하여 가독성 높이기');
+            else if (subheadings < 4) issues.push('소제목 4개 이상 권장');
+            else goods.push('소제목 구성 적절');
 
             // 노출 체크
             if (post.exposure !== 'indexed') issues.push('검색 노출을 위한 최적화 필요');
@@ -7014,12 +8116,6 @@ def index():
             '</div>';
 
             document.body.appendChild(popup);
-        }
-
-        // 아코디언 토글 함수
-        function toggleAccordion(header) {
-            const item = header.parentElement;
-            item.classList.toggle('open');
         }
 
         // 차트 렌더링 함수
