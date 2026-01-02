@@ -1264,49 +1264,75 @@ def health_check():
 
 @app.route('/api/trends')
 def get_trending_keywords():
-    """네이버 실시간 인기 검색어/트렌드 키워드 API"""
+    """실시간 인기 검색어/트렌드 키워드 API (Google Trends + 네이버)"""
     try:
-        # 네이버 데이터랩 인기 검색어 (시그널 기반)
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json',
-        }
-
-        # 네이버 검색어 트렌드 (쇼핑 인기 검색어)
         trends = []
 
-        # 방법 1: 네이버 쇼핑 인사이트
+        # 방법 1: Google Trends 실시간 트렌드 (한국)
         try:
-            shopping_url = 'https://datalab.naver.com/shoppingInsight/getKeywordRank.naver'
-            shopping_data = {'cid': 'ALL'}
-            resp = requests.post(shopping_url, data=shopping_data, headers=headers, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if 'result' in data:
-                    for item in data['result'][:10]:
-                        trends.append({'keyword': item.get('keyword', ''), 'category': '쇼핑'})
-        except:
-            pass
+            from pytrends.request import TrendReq
+            pytrends = TrendReq(hl='ko', tz=540, timeout=(10, 25))
 
-        # 방법 2: 인기 검색어 기본 목록 (블로그 관련)
-        blog_trends = [
-            {'keyword': '맛집 추천', 'category': '맛집'},
-            {'keyword': '여행 코스', 'category': '여행'},
-            {'keyword': '다이어트 식단', 'category': '건강'},
-            {'keyword': '주식 투자', 'category': '재테크'},
-            {'keyword': '인테리어 팁', 'category': '라이프'},
-            {'keyword': '육아 정보', 'category': '육아'},
-            {'keyword': '자기계발 책 추천', 'category': '도서'},
-            {'keyword': '운동 루틴', 'category': '운동'},
-            {'keyword': '카페 추천', 'category': '카페'},
-            {'keyword': '부업 방법', 'category': '재테크'},
-        ]
+            # 실시간 급상승 검색어
+            trending_searches = pytrends.trending_searches(pn='south_korea')
+            if not trending_searches.empty:
+                for idx, keyword in enumerate(trending_searches[0][:10]):
+                    trends.append({
+                        'keyword': keyword,
+                        'category': '실시간',
+                        'rank': idx + 1,
+                        'source': 'google'
+                    })
+        except Exception as e:
+            print(f"Google Trends error: {e}")
 
-        # 트렌드가 없으면 기본 목록 사용
+        # 방법 2: 네이버 데이터랩 쇼핑 인사이트 (보조)
         if len(trends) < 5:
+            try:
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json',
+                }
+                shopping_url = 'https://datalab.naver.com/shoppingInsight/getKeywordRank.naver'
+                shopping_data = {'cid': 'ALL'}
+                resp = requests.post(shopping_url, data=shopping_data, headers=headers, timeout=5)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if 'result' in data:
+                        for idx, item in enumerate(data['result'][:10]):
+                            trends.append({
+                                'keyword': item.get('keyword', ''),
+                                'category': '쇼핑',
+                                'rank': idx + 1,
+                                'source': 'naver'
+                            })
+            except Exception as e:
+                print(f"Naver DataLab error: {e}")
+
+        # 방법 3: 기본 블로그 인기 키워드 (백업)
+        if len(trends) < 5:
+            blog_trends = [
+                {'keyword': '맛집 추천', 'category': '맛집', 'rank': 1, 'source': 'default'},
+                {'keyword': '여행 코스', 'category': '여행', 'rank': 2, 'source': 'default'},
+                {'keyword': '다이어트 식단', 'category': '건강', 'rank': 3, 'source': 'default'},
+                {'keyword': '주식 투자', 'category': '재테크', 'rank': 4, 'source': 'default'},
+                {'keyword': '인테리어 팁', 'category': '라이프', 'rank': 5, 'source': 'default'},
+                {'keyword': '육아 정보', 'category': '육아', 'rank': 6, 'source': 'default'},
+                {'keyword': '자기계발 책 추천', 'category': '도서', 'rank': 7, 'source': 'default'},
+                {'keyword': '운동 루틴', 'category': '운동', 'rank': 8, 'source': 'default'},
+                {'keyword': '카페 추천', 'category': '카페', 'rank': 9, 'source': 'default'},
+                {'keyword': '부업 방법', 'category': '재테크', 'rank': 10, 'source': 'default'},
+            ]
             trends = blog_trends
 
-        return jsonify({'trends': trends[:15], 'updated': datetime.now().isoformat()})
+        # 출처 정보 추가
+        source_info = 'google' if trends and trends[0].get('source') == 'google' else 'naver' if trends and trends[0].get('source') == 'naver' else 'default'
+
+        return jsonify({
+            'trends': trends[:15],
+            'updated': datetime.now().isoformat(),
+            'source': source_info
+        })
 
     except Exception as e:
         print(f"Trends API error: {e}")
@@ -4162,6 +4188,29 @@ def index():
             gap: 8px;
         }
 
+        .trends-source {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .trends-source.google {
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            color: white;
+        }
+
+        .trends-source.naver {
+            background: linear-gradient(135deg, #03c75a, #00b843);
+            color: white;
+        }
+
+        .trends-source.default {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+        }
+
         .trends-refresh-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.2);
@@ -4201,9 +4250,18 @@ def index():
             transform: translateY(-1px);
         }
 
+        .trend-rank {
+            font-size: 11px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 18px;
+            text-align: center;
+        }
+
         .trend-keyword {
             font-size: 13px;
             color: #fff;
+            flex: 1;
         }
 
         .trend-category {
@@ -5719,7 +5777,8 @@ def index():
         <!-- 트렌드 키워드 섹션 -->
         <div id="trendsSection" class="trends-section">
             <div class="trends-header">
-                <span class="trends-title">🔥 인기 블로그 키워드</span>
+                <span class="trends-title">🔥 실시간 인기 키워드</span>
+                <span id="trendsSource" class="trends-source"></span>
                 <button class="trends-refresh-btn" onclick="loadTrendKeywords()">새로고침</button>
             </div>
             <div id="trendsList" class="trends-list">
@@ -6561,19 +6620,32 @@ def index():
         // =====================================================
         async function loadTrendKeywords() {
             const container = document.getElementById('trendsList');
+            const sourceEl = document.getElementById('trendsSource');
             container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">로딩 중...</span>';
+            sourceEl.textContent = '';
+            sourceEl.className = 'trends-source';
 
             try {
                 const response = await fetch('/api/trends');
                 const data = await response.json();
 
                 if (data.trends && data.trends.length > 0) {
-                    container.innerHTML = data.trends.map(t => `
+                    container.innerHTML = data.trends.map((t, idx) => `
                         <div class="trend-item" onclick="copyKeyword('${t.keyword}')" title="클릭하여 복사">
+                            <span class="trend-rank">${idx + 1}</span>
                             <span class="trend-keyword">${t.keyword}</span>
                             <span class="trend-category">${t.category}</span>
                         </div>
                     `).join('');
+
+                    // 출처 표시
+                    const sourceLabels = {
+                        'google': 'Google Trends',
+                        'naver': '네이버 데이터랩',
+                        'default': '추천 키워드'
+                    };
+                    sourceEl.textContent = sourceLabels[data.source] || '';
+                    sourceEl.classList.add(data.source || 'default');
                 } else {
                     container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
                 }
