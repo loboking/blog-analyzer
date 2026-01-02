@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네이버 블로그 통계 분석기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 380px;
+            min-height: 400px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .status-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .status-box.success {
+            background: rgba(0, 200, 83, 0.2);
+            border: 1px solid rgba(0, 200, 83, 0.3);
+        }
+
+        .status-box.warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .status-box.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .status-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-card .label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-card .change {
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .stat-card .change.up {
+            color: #00C853;
+        }
+
+        .stat-card .change.down {
+            color: #F44336;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .chart-placeholder {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 80px;
+            margin-top: 10px;
+        }
+
+        .chart-bar {
+            width: 20px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .link-list {
+            margin-top: 15px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .link-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .link-item .icon {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        .link-item .text {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .link-item .arrow {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .top-posts {
+            margin-top: 15px;
+        }
+
+        .post-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .post-rank {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            margin-right: 12px;
+            min-width: 25px;
+        }
+
+        .post-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .post-title {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .post-views {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>네이버 블로그 통계 분석기</h1>
+        <p>방문자 통계를 한눈에 확인하세요</p>
+    </div>
+
+    <div class="content" id="content">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; font-size: 13px;">통계 확인 중...</p>
+        </div>
+
+        <div id="main-content" style="display: none;">
+            <!-- 상태 박스 -->
+            <div class="status-box" id="status-box">
+                <div class="status-icon">📊</div>
+                <div class="status-text" id="status-text">네이버 블로그 통계 페이지로 이동해주세요.</div>
+            </div>
+
+            <!-- 통계 그리드 -->
+            <div class="stats-grid" id="stats-grid" style="display: none;">
+                <div class="stat-card">
+                    <div class="label">오늘 방문</div>
+                    <div class="value" id="today-visitors">-</div>
+                    <div class="change up" id="today-change"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">어제 방문</div>
+                    <div class="value" id="yesterday-visitors">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">이번 주</div>
+                    <div class="value" id="week-visitors">-</div>
+                    <div class="change" id="week-change"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">이번 달</div>
+                    <div class="value" id="month-visitors">-</div>
+                </div>
+            </div>
+
+            <!-- 차트 -->
+            <div class="chart-placeholder" id="chart-section" style="display: none;">
+                <div style="font-size: 12px; color: rgba(255,255,255,0.6);">최근 7일 방문자</div>
+                <div class="chart-bars" id="chart-bars">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+
+            <!-- 인기 게시글 -->
+            <div class="top-posts" id="top-posts-section" style="display: none;">
+                <div class="section-title">🔥 인기 게시글 TOP 5</div>
+                <div id="top-posts-list">
+                    <!-- 동적으로 생성 -->
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <button class="btn btn-primary" id="go-stats-btn">
+                📊 통계 페이지로 이동
+            </button>
+
+            <button class="btn btn-secondary" id="export-btn" style="display: none;">
+                📥 통계 데이터 내보내기
+            </button>
+
+            <!-- 빠른 링크 -->
+            <div class="link-list">
+                <div class="link-item" id="link-blog">
+                    <span class="icon">📝</span>
+                    <span class="text">내 블로그 관리</span>
+                    <span class="arrow">›</span>
+                </div>
+                <div class="link-item" id="link-analyzer">
+                    <span class="icon">🔍</span>
+                    <span class="text">블로그 지수 분석기</span>
+                    <span class="arrow">›</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        블로그 지수 분석기 v1.0.0 | 개인정보를 수집하지 않습니다
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

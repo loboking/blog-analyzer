@@ -1,0 +1,32 @@
+/* 네이버 블로그 통계 분석기 - Content Styles */
+
+#blog-stats-overlay {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 통계 하이라이트 */
+.blog-stats-highlight {
+    background: rgba(102, 126, 234, 0.1) !important;
+    border: 2px solid #667eea !important;
+    border-radius: 8px !important;
+    position: relative;
+}
+
+.blog-stats-highlight::after {
+    content: '📊';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 16px;
+}

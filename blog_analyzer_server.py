@@ -9,7 +9,7 @@
 3. http://localhost:5000 접속
 """
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
 import requests
 from bs4 import BeautifulSoup
@@ -1799,6 +1799,16 @@ def like_community_post(post_id):
     except Exception as e:
         print(f"Like community post error: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download/extension')
+def download_extension():
+    """크롬 확장 프로그램 다운로드"""
+    import os
+    zip_path = os.path.join(os.path.dirname(__file__), 'blog-stats-extension.zip')
+    if os.path.exists(zip_path):
+        return send_file(zip_path, as_attachment=True, download_name='blog-stats-extension.zip')
+    return "파일을 찾을 수 없습니다.", 404
 
 
 # =====================================================
