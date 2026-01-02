@@ -2798,11 +2798,47 @@ def community_page():
         /* 반응형 */
         @media (max-width: 768px) {
             .container {
-                padding: 16px;
+                padding: 12px;
+            }
+
+            .community-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px 0;
+            }
+
+            .header-left {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
             }
 
             .page-title {
-                font-size: 20px;
+                font-size: 18px;
+                white-space: nowrap;
+            }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .theme-toggle {
+                position: absolute;
+                top: 20px;
+                right: 12px;
+            }
+
+            .category-tabs {
+                gap: 8px;
+                padding-bottom: 8px;
+            }
+
+            .category-tab {
+                padding: 8px 14px;
+                font-size: 12px;
             }
 
             .form-row {
@@ -2811,6 +2847,34 @@ def community_page():
 
             .form-select {
                 width: 100%;
+            }
+
+            .form-input, .form-textarea {
+                font-size: 14px;
+            }
+
+            .write-header {
+                padding: 14px 16px;
+            }
+
+            .write-header-title {
+                font-size: 14px;
+            }
+
+            .post-item {
+                padding: 14px;
+            }
+
+            .post-title {
+                font-size: 14px;
+            }
+
+            .post-content {
+                font-size: 13px;
+            }
+
+            .post-meta {
+                font-size: 11px;
             }
         }
     </style>
@@ -6068,6 +6132,7 @@ def index():
             display: flex;
             align-items: center;
             gap: 16px;
+            flex-wrap: wrap;
         }
 
         .header-left {
@@ -6075,6 +6140,126 @@ def index():
             align-items: center;
             gap: 12px;
             flex: 1;
+            min-width: 0;
+        }
+
+        .logo {
+            min-width: 0;
+            flex-shrink: 1;
+        }
+
+        .logo h1 {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logo .subtitle {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 모바일 헤더 스타일 */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .logo h1 {
+                font-size: 20px !important;
+            }
+
+            .logo .subtitle {
+                font-size: 11px !important;
+            }
+
+            .header-badges {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: flex-start;
+            }
+
+            .header-badge {
+                font-size: 10px !important;
+                padding: 4px 8px !important;
+            }
+
+            .hamburger-btn {
+                padding: 8px;
+                font-size: 18px;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .search-box {
+                padding: 16px !important;
+                border-radius: 12px !important;
+            }
+
+            .search-form {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .input-wrapper {
+                width: 100%;
+            }
+
+            .search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .keyword-suggest-box {
+                margin-top: 12px;
+            }
+
+            .keyword-input-wrapper {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .keyword-input {
+                width: 100% !important;
+            }
+
+            .keyword-suggest-btn {
+                width: 100%;
+            }
+
+            .trends-section {
+                padding: 12px !important;
+                border-radius: 12px !important;
+            }
+
+            .trends-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .trends-title {
+                font-size: 14px;
+            }
+
+            .trends-list {
+                gap: 8px;
+            }
+
+            .trend-item {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
         }
 
         /* 반응형 슬라이드 메뉴 */
