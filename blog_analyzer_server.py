@@ -9335,7 +9335,8 @@ def index():
             popup.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.5);';
 
             const keywordTags = keywords.map(function(kw) {
-                return '<span style="display: inline-block; background: rgba(102, 126, 234, 0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 4px; border: 1px solid rgba(102, 126, 234, 0.3);">' + kw + '</span>';
+                const naverSearchUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(kw);
+                return '<a href="' + naverSearchUrl + '" target="_blank" style="display: inline-block; background: rgba(102, 126, 234, 0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 4px; border: 1px solid rgba(102, 126, 234, 0.3); text-decoration: none; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background=\'rgba(102, 126, 234, 0.4)\'" onmouseout="this.style.background=\'rgba(102, 126, 234, 0.2)\'">' + kw + ' <span style="font-size: 10px; opacity: 0.7;">🔍</span></a>';
             }).join('');
 
             popup.innerHTML = `
@@ -9347,7 +9348,7 @@ def index():
                     <div style="color: rgba(255,255,255,0.5); font-size: 11px; margin-bottom: 4px;">제목</div>
                     <div style="color: #fff; font-size: 13px; line-height: 1.4;">${title}</div>
                 </div>
-                <div style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 8px;">추출된 키워드 (${keywords.length}개)</div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 8px;">추출된 키워드 (${keywords.length}개) <span style="color: #667eea;">· 클릭 시 네이버 검색</span></div>
                 <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     ${keywordTags}
                 </div>
