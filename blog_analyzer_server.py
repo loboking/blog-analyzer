@@ -6652,14 +6652,9 @@ def index():
                         </div>
                     `).join('');
 
-                    // 출처 표시
-                    const sourceLabels = {
-                        'google': 'Google Trends',
-                        'naver': '네이버 데이터랩',
-                        'default': '추천 키워드'
-                    };
-                    sourceEl.textContent = sourceLabels[data.source] || '';
-                    sourceEl.classList.add(data.source || 'default');
+                    // 출처 표시 (숨김)
+                    sourceEl.textContent = '';
+                    sourceEl.style.display = 'none';
                 } else {
                     container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
                 }
