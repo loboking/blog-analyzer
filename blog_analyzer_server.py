@@ -8350,11 +8350,10 @@ def index():
                         </div>
                     </div>
 
-                    <!-- 포스팅 지수 테이블 -->
-                    ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
                     <!-- 게시글 진단 섹션 -->
+                    ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
                     <div class="section-card">
-                        <h3 class="section-title">📋 게시글 진단 <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
+                        <h3 class="section-title">📋 게시글 진단 (최근 ${data.posts_with_index.length}개) <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
                             💡 <strong>진단 결과:</strong> 누락 상태인 글은 네이버 검색에서 제외된 상태입니다. 최적화 점수 70점 이상을 목표로 하세요.
                         </div>
@@ -8362,56 +8361,60 @@ def index():
                             <table class="post-diagnosis-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 35%;">제목</th>
-                                        <th style="width: 12%;">누락여부</th>
-                                        <th style="width: 23%;">상위노출 키워드</th>
-                                        <th style="width: 15%;">최적화 점수</th>
-                                        <th style="width: 15%;">발행일</th>
+                                        <th style="width: 25%;">제목</th>
+                                        <th style="width: 8%;">누락</th>
+                                        <th style="width: 18%;">형태소</th>
+                                        <th style="width: 5%;">댓글</th>
+                                        <th style="width: 5%;">공감</th>
+                                        <th style="width: 5%;">사진</th>
+                                        <th style="width: 12%;">최적화</th>
+                                        <th style="width: 10%;">발행일</th>
+                                        <th style="width: 12%;">분석</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="postsTableBody">
                                     ${data.posts_with_index.map(function(post, idx) {
                                         const score = calculatePostScore(post);
                                         const scoreColor = score >= 80 ? '#00C853' : score >= 60 ? '#667eea' : score >= 40 ? '#FFC107' : '#F44336';
-                                        const scoreLabel = score >= 80 ? '우수' : score >= 60 ? '양호' : score >= 40 ? '보통' : '개선필요';
+                                        const scoreLabel = score >= 80 ? '우수' : score >= 60 ? '양호' : score >= 40 ? '보통' : '개선';
 
                                         // 누락여부 상태
                                         const missingStatus = post.exposure === 'indexed' ? '<span style="color: #00C853; font-weight: 600;">정상</span>' :
                                                              post.exposure === 'missing' ? '<span style="color: #F44336; font-weight: 600;">누락</span>' :
                                                              '<span style="color: #FFC107; font-weight: 600;">확인중</span>';
 
-                                        // 상위노출 키워드 (첫번째 + 외 N개) - 클릭시 팝업
-                                        const postKeywords = getPostKeywords(post, 5);
-                                        let keywordsDisplay = '-';
-                                        if (postKeywords.length > 0) {
-                                            const kwId = 'kw_' + idx;
-                                            window['kwData_' + idx] = {
-                                                keywords: postKeywords,
-                                                title: post.title || '',
-                                                mainKeyword: post.keyword || '',
-                                                exposure: post.exposure || 'unknown'
-                                            };
-                                            if (postKeywords.length === 1) {
-                                                keywordsDisplay = '<span class="keyword-clickable" onclick="showKeywordPopupById(' + idx + ')" style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' 🔍</span>';
-                                            } else {
-                                                keywordsDisplay = '<span class="keyword-clickable" onclick="showKeywordPopupById(' + idx + ')" style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' <span style="color: rgba(255,255,255,0.6);">외 ' + (postKeywords.length - 1) + '개</span> 🔍</span>';
-                                            }
-                                        }
+                                        // 형태소 키워드
+                                        const postKeywords = getPostKeywords(post, 3);
+                                        const keywordsHtml = postKeywords.length > 0 ? postKeywords.map(function(kw) { return '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin: 1px;">' + kw + '</span>'; }).join(' ') : '<span style="color: rgba(255,255,255,0.3);">-</span>';
 
                                         // 발행일 포맷
                                         const dateDisplay = formatRelativeDate(post.date);
 
-                                        return '<tr>' +
+                                        // 더보기 숨김 처리
+                                        const hiddenClass = idx >= 5 ? 'hidden-post-row' : '';
+
+                                        return '<tr class="' + hiddenClass + '">' +
                                             '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + (post.title || '') + '">' + (post.title || '제목 없음') + '</a></td>' +
                                             '<td style="text-align: center;">' + missingStatus + '</td>' +
-                                            '<td style="text-align: left;">' + keywordsDisplay + '</td>' +
-                                            '<td style="text-align: center;"><span style="background: ' + scoreColor + '20; color: ' + scoreColor + '; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">' + scoreLabel + ' ' + score + '점</span></td>' +
-                                            '<td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 12px;">' + dateDisplay + '</td>' +
+                                            '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
+                                            '<td style="text-align: center;">' + (post.comments || 0) + '</td>' +
+                                            '<td style="text-align: center;">' + (post.likes || 0) + '</td>' +
+                                            '<td style="text-align: center;">' + (post.images || 0) + '</td>' +
+                                            '<td style="text-align: center;"><span style="background: ' + scoreColor + '20; color: ' + scoreColor + '; padding: 3px 8px; border-radius: 10px; font-weight: 600; font-size: 11px;">' + score + '점</span></td>' +
+                                            '<td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 11px;">' + dateDisplay + '</td>' +
+                                            '<td><button class="analyze-btn" onclick=\\'showPostAnalysis(' + JSON.stringify(post).replace(/'/g, "&#39;").replace(/\\\\/g, "\\\\\\\\") + ')\\'>🔍 상세</button></td>' +
                                         '</tr>';
                                     }).join('')}
                                 </tbody>
                             </table>
                         </div>
+                        ${data.posts_with_index.length > 5 ? `
+                        <div class="load-more-container" id="loadMoreContainer">
+                            <button class="load-more-btn" onclick="toggleMorePosts()">
+                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개)</span>
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
 
                     <!-- 형태소 분석 섹션 -->
@@ -8449,60 +8452,6 @@ def index():
                         </div>
                     </div>
 
-                    <!-- 포스팅 지수 테이블 -->
-                    <div class="section-card">
-                        <h3 class="section-title">📊 포스팅 지수 (최근 ${data.posts_with_index.length}개) <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 키워드 검색 노출 확인</span></h3>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
-                            💡 <strong>콘텐츠 지수:</strong> 1에 수렴할수록 좋습니다. [-] 표시는 상대적 지수가 낮게 측정된 부분입니다.
-                        </div>
-                        <div class="table-scroll-container">
-                            <table class="post-index-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 7%;">발행</th>
-                                        <th style="width: 22%;">제목</th>
-                                        <th style="width: 6%;">지수</th>
-                                        <th style="width: 5%;">댓글</th>
-                                        <th style="width: 5%;">공감</th>
-                                        <th style="width: 5%;">사진</th>
-                                        <th style="width: 15%;">형태소</th>
-                                        <th style="width: 15%;">검색 키워드</th>
-                                        <th style="width: 8%;">노출</th>
-                                        <th style="width: 12%;">분석</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="postsTableBody">
-                                    ${data.posts_with_index.map(function(post, idx) {
-                                        const contentScore = calculateContentIndex(post);
-                                        const scoreColor = contentScore >= 0.8 ? '#00C853' : contentScore >= 0.5 ? '#667eea' : contentScore >= 0.3 ? '#FFC107' : '#F44336';
-                                        const scoreDisplay = contentScore >= 0 ? contentScore.toFixed(2) : '-';
-                                        const postKeywords = getPostKeywords(post, 3);
-                                        const keywordsHtml = postKeywords.length > 0 ? postKeywords.map(function(kw) { return '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin: 1px;">' + kw + '</span>'; }).join(' ') : '<span style="color: rgba(255,255,255,0.3);">-</span>';
-                                        const hiddenClass = idx >= 5 ? 'hidden-post-row' : '';
-                                        return '<tr class="' + hiddenClass + '">' +
-                                            '<td class="post-date-cell">' + formatRelativeDate(post.date) + '</td>' +
-                                            '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + (post.title || '') + '">' + (post.title || '제목 없음') + '</a></td>' +
-                                            '<td style="text-align: center; font-weight: 600; color: ' + scoreColor + ';">' + scoreDisplay + '</td>' +
-                                            '<td style="text-align: center;">' + (post.comments || 0) + '</td>' +
-                                            '<td style="text-align: center;">' + (post.likes || 0) + '</td>' +
-                                            '<td style="text-align: center;">' + (post.images || 0) + '</td>' +
-                                            '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
-                                            '<td><a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(post.keyword || '') + '" target="_blank" class="keyword-link" title="이 키워드로 검색">' + (post.keyword || '-') + ' 🔍</a></td>' +
-                                            '<td>' + getExposureBadge(post.exposure) + '</td>' +
-                                            '<td><button class="analyze-btn" onclick=\\'showPostAnalysis(' + JSON.stringify(post).replace(/'/g, "&#39;").replace(/\\\\/g, "\\\\\\\\") + ')\\'>🔍 상세</button></td>' +
-                                        '</tr>';
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                        ${data.posts_with_index.length > 5 ? `
-                        <div class="load-more-container" id="loadMoreContainer">
-                            <button class="load-more-btn" onclick="toggleMorePosts()">
-                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개)</span>
-                            </button>
-                        </div>
-                        ` : ''}
-                    </div>
                     ` : ''}
 
                     <div class="info-box">
