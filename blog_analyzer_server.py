@@ -9187,9 +9187,19 @@ def index():
                                                              post.exposure === 'missing' ? '<span style="color: #F44336; font-weight: 600;">누락</span>' :
                                                              '<span style="color: #FFC107; font-weight: 600;">확인중</span>';
 
-                                        // 형태소 키워드
-                                        const postKeywords = getPostKeywords(post, 3);
-                                        const keywordsHtml = postKeywords.length > 0 ? postKeywords.map(function(kw) { return '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin: 1px;">' + kw + '</span>'; }).join(' ') : '<span style="color: rgba(255,255,255,0.3);">-</span>';
+                                        // 형태소 키워드 (클릭 시 팝업)
+                                        const allKeywords = getPostKeywords(post, 10);
+                                        let keywordsHtml = '<span style="color: rgba(255,255,255,0.3);">-</span>';
+                                        if (allKeywords.length > 0) {
+                                            const firstKw = allKeywords[0];
+                                            const remainCount = allKeywords.length - 1;
+                                            const keywordsJson = JSON.stringify(allKeywords).replace(/'/g, "&#39;");
+                                            if (remainCount > 0) {
+                                                keywordsHtml = '<span class="morpheme-preview" onclick=\\'showMorphemePopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="cursor: pointer; background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;"><span style="color: #fff;">' + firstKw + '</span> <span style="color: #667eea; font-size: 10px;">외 ' + remainCount + '개</span></span>';
+                                            } else {
+                                                keywordsHtml = '<span style="background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;">' + firstKw + '</span>';
+                                            }
+                                        }
 
                                         // 발행일 포맷
                                         const dateDisplay = formatRelativeDate(post.date);
@@ -9308,6 +9318,43 @@ def index():
                     adfit.render();
                 }
             }, 200);
+        }
+
+        // 형태소 팝업 함수
+        function showMorphemePopup(keywords, title) {
+            // 기존 팝업이 있으면 제거
+            const existingPopup = document.querySelector('.morpheme-popup-overlay');
+            if (existingPopup) existingPopup.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'morpheme-popup-overlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+            const popup = document.createElement('div');
+            popup.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.5);';
+
+            const keywordTags = keywords.map(function(kw) {
+                return '<span style="display: inline-block; background: rgba(102, 126, 234, 0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 4px; border: 1px solid rgba(102, 126, 234, 0.3);">' + kw + '</span>';
+            }).join('');
+
+            popup.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="color: #fff; font-size: 16px; margin: 0;">📝 형태소 분석</h3>
+                    <button onclick="this.closest('.morpheme-popup-overlay').remove()" style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="color: rgba(255,255,255,0.5); font-size: 11px; margin-bottom: 4px;">제목</div>
+                    <div style="color: #fff; font-size: 13px; line-height: 1.4;">${title}</div>
+                </div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 8px;">추출된 키워드 (${keywords.length}개)</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    ${keywordTags}
+                </div>
+            `;
+
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
         }
 
         // 포스팅 상세 분석 모달 함수
