@@ -6946,6 +6946,12 @@ def index():
             }
         }
 
+        // 키워드 팝업 닫기
+        function closeKeywordPopup() {
+            const popup = document.getElementById('keywordPopup');
+            if (popup) popup.remove();
+        }
+
         // 키워드 팝업 표시 함수
         function showKeywordPopup(keywords, postTitle) {
             // 기존 팝업 제거
@@ -6970,7 +6976,7 @@ def index():
                 '<div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
                     '<div style="display: flex; justify-content: space-between; align-items: center;">' +
                         '<h3 style="margin: 0; font-size: 16px; color: white;">🔍 추출 키워드</h3>' +
-                        '<button onclick="this.closest(\'#keywordPopup\').remove()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer;">&times;</button>' +
+                        '<button onclick="closeKeywordPopup()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer;">&times;</button>' +
                     '</div>' +
                     '<p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (postTitle || '') + '</p>' +
                 '</div>' +
