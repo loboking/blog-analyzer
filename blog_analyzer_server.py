@@ -105,10 +105,10 @@ class NaverBlogCrawler:
             # 6. 지수 계산 (주간 평균 사용)
             result['index'] = self._calculate_index(result, weekly_avg=weekly_avg, weekly_count=weekly_count)
 
-            # 7. 포스팅 지수 정보 (최근 5개 - 속도 최적화)
+            # 7. 포스팅 지수 정보 (최근 15개 - 더보기 버튼으로 확장)
             if result.get('recent_posts'):
                 result['posts_with_index'] = self._get_posts_with_index(
-                    blog_id, result['recent_posts'], max_posts=5
+                    blog_id, result['recent_posts'], max_posts=15
                 )
 
         except Exception as e:
@@ -3016,6 +3016,46 @@ def index():
             background: rgba(255,255,255,0.03);
         }
 
+        /* 숨김 포스트 행 */
+        .hidden-post-row {
+            display: none;
+        }
+
+        .hidden-post-row.show {
+            display: table-row;
+        }
+
+        /* 더보기 버튼 */
+        .load-more-container {
+            text-align: center;
+            padding: 16px 0;
+            margin-top: 8px;
+        }
+
+        .load-more-btn {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            color: #667eea;
+            padding: 12px 32px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .load-more-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
+            border-color: rgba(102, 126, 234, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .load-more-btn.expanded {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+        }
+
         /* 게시글 진단 테이블 스타일 */
         .post-diagnosis-table {
             width: 100%;
@@ -5641,13 +5681,13 @@ def index():
                     <div class="logo-icon">📊</div>
                     <div>
                         <h1>블로그 지수 분석기</h1>
-                        <p class="subtitle">검색 노출 확인 · AI 코칭 · 키워드 분석</p>
+                        <p class="subtitle">검색 노출 확인 · 키워드 분석</p>
                     </div>
                 </div>
             </div>
             <div class="header-badges">
                 <span class="header-badge">🔍 실시간 노출 체크</span>
-                <span class="header-badge">📈 성장 코칭</span>
+                <span class="header-badge">📈 성장 분석</span>
                 <span class="header-badge">🎯 키워드 경쟁도</span>
             </div>
         </header>
@@ -8105,7 +8145,7 @@ def index():
                         <div class="coaching-header">
                             <span class="coaching-icon">🎓</span>
                             <div>
-                                <div class="coaching-title">블로그 성장 코칭</div>
+                                <div class="coaching-title">블로그 성장 분석</div>
                                 <div class="coaching-subtitle">현재 상태 분석 및 맞춤형 조언 (클릭하여 펼치기)</div>
                             </div>
                         </div>
@@ -8350,14 +8390,15 @@ def index():
                                         <th style="width: 12%;">분석</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="postsTableBody">
                                     ${data.posts_with_index.map(function(post, idx) {
                                         const contentScore = calculateContentIndex(post);
                                         const scoreColor = contentScore >= 0.8 ? '#00C853' : contentScore >= 0.5 ? '#667eea' : contentScore >= 0.3 ? '#FFC107' : '#F44336';
                                         const scoreDisplay = contentScore >= 0 ? contentScore.toFixed(2) : '-';
                                         const postKeywords = getPostKeywords(post, 3);
                                         const keywordsHtml = postKeywords.length > 0 ? postKeywords.map(function(kw) { return '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin: 1px;">' + kw + '</span>'; }).join(' ') : '<span style="color: rgba(255,255,255,0.3);">-</span>';
-                                        return '<tr>' +
+                                        const hiddenClass = idx >= 5 ? 'hidden-post-row' : '';
+                                        return '<tr class="' + hiddenClass + '">' +
                                             '<td class="post-date-cell">' + formatRelativeDate(post.date) + '</td>' +
                                             '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + (post.title || '') + '">' + (post.title || '제목 없음') + '</a></td>' +
                                             '<td style="text-align: center; font-weight: 600; color: ' + scoreColor + ';">' + scoreDisplay + '</td>' +
@@ -8373,6 +8414,13 @@ def index():
                                 </tbody>
                             </table>
                         </div>
+                        ${data.posts_with_index.length > 5 ? `
+                        <div class="load-more-container" id="loadMoreContainer">
+                            <button class="load-more-btn" onclick="toggleMorePosts()">
+                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개)</span>
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                     ` : ''}
 
@@ -8821,6 +8869,32 @@ def index():
         function closeModalOnOverlay(event) {
             if (event.target === document.getElementById('analysisModal')) {
                 closeAnalysisModal();
+            }
+        }
+
+        // 포스팅 지수 더보기 토글
+        let postsExpanded = false;
+        function toggleMorePosts() {
+            const hiddenRows = document.querySelectorAll('.hidden-post-row');
+            const btn = document.querySelector('.load-more-btn');
+            const loadMoreText = document.getElementById('loadMoreText');
+
+            postsExpanded = !postsExpanded;
+
+            hiddenRows.forEach(row => {
+                if (postsExpanded) {
+                    row.classList.add('show');
+                } else {
+                    row.classList.remove('show');
+                }
+            });
+
+            if (postsExpanded) {
+                loadMoreText.textContent = '- 접기';
+                btn.classList.add('expanded');
+            } else {
+                loadMoreText.textContent = '+ 더보기 (' + hiddenRows.length + '개)';
+                btn.classList.remove('expanded');
             }
         }
 
