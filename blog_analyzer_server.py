@@ -6363,14 +6363,15 @@ def index():
                                                              post.exposure === 'missing' ? '<span style="color: #F44336; font-weight: 600;">누락</span>' :
                                                              '<span style="color: #FFC107; font-weight: 600;">확인중</span>';
 
-                                        // 상위노출 키워드 (첫번째 + 외 N개)
+                                        // 상위노출 키워드 (첫번째 + 외 N개) - 클릭시 팝업
                                         const postKeywords = getPostKeywords(post, 5);
                                         let keywordsDisplay = '-';
                                         if (postKeywords.length > 0) {
+                                            const keywordsJson = JSON.stringify(postKeywords).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                                             if (postKeywords.length === 1) {
-                                                keywordsDisplay = '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px;">' + postKeywords[0] + '</span>';
+                                                keywordsDisplay = '<span class="keyword-clickable" onclick=\\'showKeywordPopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' 🔍</span>';
                                             } else {
-                                                keywordsDisplay = '<span style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px;">' + postKeywords[0] + '</span> <span style="color: rgba(255,255,255,0.5); font-size: 11px;">외 ' + (postKeywords.length - 1) + '개</span>';
+                                                keywordsDisplay = '<span class="keyword-clickable" onclick=\\'showKeywordPopup(' + keywordsJson + ', \"' + (post.title || '').replace(/"/g, '&quot;') + '\")\\' style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' <span style="color: rgba(255,255,255,0.6);">외 ' + (postKeywords.length - 1) + '개</span> 🔍</span>';
                                             }
                                         }
 
@@ -6907,6 +6908,43 @@ def index():
             if (event.target === document.getElementById('analysisModal')) {
                 closeAnalysisModal();
             }
+        }
+
+        // 키워드 팝업 표시 함수
+        function showKeywordPopup(keywords, postTitle) {
+            // 기존 팝업 제거
+            const existingPopup = document.getElementById('keywordPopup');
+            if (existingPopup) existingPopup.remove();
+
+            // 팝업 생성
+            const popup = document.createElement('div');
+            popup.id = 'keywordPopup';
+            popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+            popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
+
+            // 팝업 내용
+            let keywordsList = keywords.map(function(kw) {
+                return '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
+                    '<span style="font-size: 14px; font-weight: 500;">' + kw + '</span>' +
+                    '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(kw) + '" target="_blank" style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">검색 🔍</a>' +
+                '</div>';
+            }).join('');
+
+            popup.innerHTML = '<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; width: 90%; max-width: 400px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">' +
+                '<div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                        '<h3 style="margin: 0; font-size: 16px; color: white;">🔍 추출 키워드</h3>' +
+                        '<button onclick="this.closest(\'#keywordPopup\').remove()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer;">&times;</button>' +
+                    '</div>' +
+                    '<p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (postTitle || '') + '</p>' +
+                '</div>' +
+                '<div style="max-height: 400px; overflow-y: auto;">' + keywordsList + '</div>' +
+                '<div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">' +
+                    '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(keywords.join(' ')) + '" target="_blank" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">전체 키워드로 검색</a>' +
+                '</div>' +
+            '</div>';
+
+            document.body.appendChild(popup);
         }
 
         // 아코디언 토글 함수
