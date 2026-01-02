@@ -6395,7 +6395,12 @@ def index():
                                         let keywordsDisplay = '-';
                                         if (postKeywords.length > 0) {
                                             const kwId = 'kw_' + idx;
-                                            window['kwData_' + idx] = { keywords: postKeywords, title: post.title || '' };
+                                            window['kwData_' + idx] = {
+                                                keywords: postKeywords,
+                                                title: post.title || '',
+                                                mainKeyword: post.keyword || '',
+                                                exposure: post.exposure || 'unknown'
+                                            };
                                             if (postKeywords.length === 1) {
                                                 keywordsDisplay = '<span class="keyword-clickable" onclick="showKeywordPopupById(' + idx + ')" style="background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">' + postKeywords[0] + ' 🔍</span>';
                                             } else {
@@ -6942,7 +6947,7 @@ def index():
         function showKeywordPopupById(idx) {
             const data = window['kwData_' + idx];
             if (data) {
-                showKeywordPopup(data.keywords, data.title);
+                showKeywordPopup(data.keywords, data.title, data.mainKeyword, data.exposure);
             }
         }
 
@@ -6953,7 +6958,7 @@ def index():
         }
 
         // 키워드 팝업 표시 함수
-        function showKeywordPopup(keywords, postTitle) {
+        function showKeywordPopup(keywords, postTitle, mainKeyword, exposure) {
             // 기존 팝업 제거
             const existingPopup = document.getElementById('keywordPopup');
             if (existingPopup) existingPopup.remove();
@@ -6964,13 +6969,32 @@ def index():
             popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;';
             popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
 
+            // 노출 상태 배지
+            const exposureBadge = exposure === 'indexed' ?
+                '<span style="background: rgba(76,175,80,0.2); color: #81c784; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">노출중</span>' :
+                exposure === 'missing' ?
+                '<span style="background: rgba(244,67,54,0.2); color: #e57373; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">누락</span>' :
+                '<span style="background: rgba(255,193,7,0.2); color: #ffd54f; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">확인중</span>';
+
             // 팝업 내용
             let keywordsList = keywords.map(function(kw) {
-                return '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
-                    '<span style="font-size: 14px; font-weight: 500;">' + kw + '</span>' +
+                const isMainKeyword = mainKeyword && kw.toLowerCase() === mainKeyword.toLowerCase();
+                const badge = isMainKeyword ? exposureBadge : '';
+                const bgColor = isMainKeyword && exposure === 'indexed' ? 'rgba(76,175,80,0.1)' : 'transparent';
+                return '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); background: ' + bgColor + ';">' +
+                    '<span style="font-size: 14px; font-weight: 500;">' + kw + badge + '</span>' +
                     '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(kw) + '" target="_blank" style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">검색 🔍</a>' +
                 '</div>';
             }).join('');
+
+            // 메인 키워드가 추출 키워드에 없으면 맨 위에 추가
+            if (mainKeyword && !keywords.some(k => k.toLowerCase() === mainKeyword.toLowerCase())) {
+                const bgColor = exposure === 'indexed' ? 'rgba(76,175,80,0.1)' : 'transparent';
+                keywordsList = '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); background: ' + bgColor + ';">' +
+                    '<span style="font-size: 14px; font-weight: 500;">' + mainKeyword + exposureBadge + '</span>' +
+                    '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(mainKeyword) + '" target="_blank" style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">검색 🔍</a>' +
+                '</div>' + keywordsList;
+            }
 
             popup.innerHTML = '<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; width: 90%; max-width: 400px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">' +
                 '<div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
