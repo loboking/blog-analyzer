@@ -2048,6 +2048,304 @@ def disclaimer_page():
 
 
 # =====================================================
+# 크롬 확장 프로그램 페이지
+# =====================================================
+@app.route('/extension')
+def extension_page():
+    """크롬 확장 프로그램 안내 페이지"""
+    return '''<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>블로그 통계 확장 프로그램 - 블로그 지수 분석기</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .back-btn:hover { text-decoration: underline; }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p { color: #888; font-size: 16px; }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .feature-item {
+            background: rgba(102,126,234,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-item span:first-child { font-size: 24px; }
+        .steps {
+            counter-reset: step;
+        }
+        .step {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .step-content h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .step-content p {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 20px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.3);
+        }
+        .note {
+            background: rgba(255,193,7,0.1);
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 0 12px 12px 0;
+            margin-top: 20px;
+        }
+        .note-title {
+            font-weight: 600;
+            color: #ffc107;
+            margin-bottom: 8px;
+        }
+        .note p { color: #ccc; font-size: 14px; line-height: 1.6; }
+        .screenshot {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .screenshot-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            padding: 40px;
+            color: white;
+        }
+        .faq { margin-top: 10px; }
+        .faq-item {
+            margin-bottom: 15px;
+        }
+        .faq-item h4 {
+            color: #667eea;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .faq-item p { color: #888; font-size: 14px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← 메인으로 돌아가기</a>
+
+        <div class="header">
+            <div class="header-icon">🧩</div>
+            <h1>블로그 통계 확장 프로그램</h1>
+            <p>네이버 블로그 관리자 페이지에서 통계를 쉽게 확인하세요</p>
+        </div>
+
+        <div class="card">
+            <h2>✨ 주요 기능</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span>📊</span>
+                    <span>오늘/어제 방문자 수</span>
+                </div>
+                <div class="feature-item">
+                    <span>📈</span>
+                    <span>주간/월간 방문 추이</span>
+                </div>
+                <div class="feature-item">
+                    <span>🏆</span>
+                    <span>인기 게시글 TOP 5</span>
+                </div>
+                <div class="feature-item">
+                    <span>📁</span>
+                    <span>데이터 JSON 내보내기</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📥 다운로드</h2>
+            <p style="color: #888; margin-bottom: 15px;">아래 버튼을 클릭하여 확장 프로그램 ZIP 파일을 다운로드하세요.</p>
+            <a href="/download/extension" class="download-btn">
+                <span>⬇️</span>
+                <span>확장 프로그램 다운로드</span>
+            </a>
+            <p style="color: #666; font-size: 13px;">파일 크기: 약 12KB</p>
+        </div>
+
+        <div class="card">
+            <h2>🔧 설치 방법</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>ZIP 파일 다운로드 & 압축 해제</h3>
+                        <p>위의 다운로드 버튼을 클릭하여 ZIP 파일을 받고, 원하는 위치에 압축을 해제합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>크롬 확장 프로그램 페이지 열기</h3>
+                        <p>크롬 브라우저에서 <strong>chrome://extensions</strong>를 입력하거나, 메뉴 → 도구 더보기 → 확장 프로그램을 클릭합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>개발자 모드 활성화</h3>
+                        <p>우측 상단의 <strong>"개발자 모드"</strong> 토글을 켭니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>압축해제된 확장 프로그램 로드</h3>
+                        <p><strong>"압축해제된 확장 프로그램을 로드합니다"</strong> 버튼을 클릭하고, 압축을 푼 폴더를 선택합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>설치 완료!</h3>
+                        <p>브라우저 우측 상단에 📊 아이콘이 나타나면 설치가 완료된 것입니다. 네이버 블로그 관리 페이지에서 클릭하여 사용하세요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💡 사용 방법</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>네이버 블로그 관리 페이지 접속</h3>
+                        <p><a href="https://admin.blog.naver.com/" target="_blank" style="color: #667eea;">admin.blog.naver.com</a>에 로그인합니다.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>확장 프로그램 아이콘 클릭</h3>
+                        <p>브라우저 우측 상단의 📊 아이콘을 클릭하면 팝업이 열리며 통계가 표시됩니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <div class="note-title">⚠️ 참고사항</div>
+                <p>이 확장 프로그램은 <strong>본인 블로그의 통계만</strong> 확인할 수 있습니다. 네이버 블로그 관리 페이지에 로그인한 상태에서만 작동합니다.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>❓ 자주 묻는 질문</h2>
+            <div class="faq">
+                <div class="faq-item">
+                    <h4>Q. 다른 사람의 블로그 통계도 볼 수 있나요?</h4>
+                    <p>아니요, 본인이 로그인한 블로그의 통계만 확인할 수 있습니다. 다른 블로그의 방문자 수는 공개되지 않는 정보입니다.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Q. 크롬 외 다른 브라우저에서도 사용할 수 있나요?</h4>
+                    <p>Edge, Whale 등 크로미움 기반 브라우저에서도 동일한 방법으로 설치 가능합니다.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Q. 안전한가요?</h4>
+                    <p>네, 이 확장 프로그램은 네이버 블로그 관리 페이지에서만 작동하며, 어떠한 개인정보도 외부로 전송하지 않습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>'''
+
+
+# =====================================================
 # 커뮤니티 페이지
 # =====================================================
 @app.route('/community')
@@ -5900,11 +6198,18 @@ def index():
             </div>
 
             <!-- 커뮤니티 -->
-            <div class="menu-item" onclick="openCommunity()">
+            <a href="/community" class="menu-item" style="text-decoration: none; color: inherit;">
                 <span class="menu-item-icon">💬</span>
                 <span>커뮤니티</span>
                 <span style="margin-left: auto; background: #4CAF50; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">NEW</span>
-            </div>
+            </a>
+
+            <!-- 크롬 확장 프로그램 -->
+            <a href="/extension" class="menu-item" style="text-decoration: none; color: inherit;">
+                <span class="menu-item-icon">🧩</span>
+                <span>통계 확장 프로그램</span>
+                <span style="margin-left: auto; background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px;">NEW</span>
+            </a>
 
             <!-- 사용법 -->
             <div class="menu-item" onclick="showGuide('usage')">
