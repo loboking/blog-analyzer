@@ -6294,7 +6294,6 @@ def index():
             <div class="header-left">
                 <button class="hamburger-btn" onclick="openSlideMenu()" title="메뉴 열기">☰</button>
                 <div class="logo">
-                    <div class="logo-icon">📊</div>
                     <div>
                         <h1>블로그 지수 분석기</h1>
                         <p class="subtitle">검색 노출 확인 · 키워드 분석</p>
