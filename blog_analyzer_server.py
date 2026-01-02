@@ -1268,21 +1268,35 @@ def get_trending_keywords():
     try:
         trends = []
 
-        # 방법 1: Google Trends 실시간 트렌드 (한국)
+        # 방법 1: Google Trends 관련 검색어 (인기 카테고리별)
         try:
             from pytrends.request import TrendReq
+            import random
             pytrends = TrendReq(hl='ko', tz=540, timeout=(10, 25))
 
-            # 실시간 급상승 검색어
-            trending_searches = pytrends.trending_searches(pn='south_korea')
-            if not trending_searches.empty:
-                for idx, keyword in enumerate(trending_searches[0][:10]):
-                    trends.append({
-                        'keyword': keyword,
-                        'category': '실시간',
-                        'rank': idx + 1,
-                        'source': 'google'
-                    })
+            # 블로그 인기 카테고리 키워드로 급상승 검색어 수집
+            seed_keywords = ['맛집', '여행', '카페', '다이어트', '인테리어']
+            random.shuffle(seed_keywords)
+
+            for seed in seed_keywords[:2]:  # 2개 카테고리만 사용 (속도)
+                try:
+                    pytrends.build_payload([seed], cat=0, timeframe='now 1-d', geo='KR')
+                    related = pytrends.related_queries()
+
+                    if seed in related and related[seed]['rising'] is not None:
+                        rising_df = related[seed]['rising']
+                        for _, row in rising_df.head(5).iterrows():
+                            keyword = row['query']
+                            if keyword not in [t['keyword'] for t in trends]:
+                                trends.append({
+                                    'keyword': keyword,
+                                    'category': seed,
+                                    'rank': len(trends) + 1,
+                                    'source': 'google'
+                                })
+                except:
+                    continue
+
         except Exception as e:
             print(f"Google Trends error: {e}")
 
@@ -1303,7 +1317,7 @@ def get_trending_keywords():
                             trends.append({
                                 'keyword': item.get('keyword', ''),
                                 'category': '쇼핑',
-                                'rank': idx + 1,
+                                'rank': len(trends) + 1,
                                 'source': 'naver'
                             })
             except Exception as e:
