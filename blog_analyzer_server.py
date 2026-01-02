@@ -5177,8 +5177,31 @@ def index():
                 localStorage.setItem(HISTORY_KEY, JSON.stringify(limited));
 
                 renderHistory();
+
+                // Supabase DB에도 저장
+                saveToSupabase(data);
             } catch (e) {
                 console.warn('히스토리 저장 실패:', e);
+            }
+        }
+
+        // Supabase DB 저장 함수
+        async function saveToSupabase(data) {
+            try {
+                const response = await fetch('/api/history/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        blog_id: data.blog_id,
+                        analysis_data: data
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log('✅ DB 저장 완료:', data.blog_id);
+                }
+            } catch (e) {
+                console.warn('DB 저장 실패:', e);
             }
         }
 
