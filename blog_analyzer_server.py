@@ -9309,7 +9309,7 @@ def index():
             saveFullHistory(data);
 
             // 게시글 페이지네이션 리셋
-            postsShowCount = 5;
+            diagnosisShowCount = 5;
 
             // 주간 평균 계산
             const weeklyAvg = getWeeklyAverage(data.blog_id);
@@ -10455,8 +10455,8 @@ def index():
         }
 
         // 포스팅 지수 더보기 (5개씩 페이지네이션)
-        let postsShowCount = 5;  // 현재 보이는 개수
-        const postsPerPage = 5;  // 한 번에 로드할 개수
+        let diagnosisShowCount = 5;  // 현재 보이는 개수
+        const diagnosisPerPage = 5;  // 한 번에 로드할 개수
 
         function toggleMorePosts() {
             const allRows = document.querySelectorAll('#postsTableBody tr');
@@ -10465,7 +10465,7 @@ def index():
             const totalPosts = allRows.length;
 
             // 5개 더 보여주기
-            const newShowCount = Math.min(postsShowCount + postsPerPage, totalPosts);
+            const newShowCount = Math.min(diagnosisShowCount + diagnosisPerPage, totalPosts);
 
             allRows.forEach((row, idx) => {
                 if (idx < newShowCount) {
@@ -10474,8 +10474,8 @@ def index():
                 }
             });
 
-            postsShowCount = newShowCount;
-            const remaining = totalPosts - postsShowCount;
+            diagnosisShowCount = newShowCount;
+            const remaining = totalPosts - diagnosisShowCount;
 
             if (remaining > 0) {
                 loadMoreText.textContent = '+ 더보기 (' + remaining + '개 남음)';
@@ -10501,7 +10501,7 @@ def index():
                 }
             });
 
-            postsShowCount = 5;
+            diagnosisShowCount = 5;
             const remaining = totalPosts - 5;
             loadMoreText.textContent = '+ 더보기 (' + remaining + '개 남음)';
             btn.classList.remove('expanded');
