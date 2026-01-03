@@ -8350,6 +8350,11 @@ def index():
             return sorted;
         }
 
+        // HTML 속성 이스케이핑 함수 (전역)
+        function escapeHtmlAttr(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         // 개별 포스트 키워드 추출 함수 (개선된 버전)
         function getPostKeywords(post, maxKeywords) {
             maxKeywords = maxKeywords || 3;
@@ -9239,20 +9244,16 @@ def index():
 
                                         // 형태소 키워드 (클릭 시 팝업)
                                         const allKeywords = getPostKeywords(post, 10);
-                                        let keywordsHtml = '<span style="color: rgba(255,255,255,0.3);">-</span>';
+                                        let keywordsHtml = '-';
                                         if (allKeywords.length > 0) {
-                                            // 특수문자 이스케이핑 함수
-                                            function escapeHtml(str) {
-                                                return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                            }
-                                            const firstKw = escapeHtml(allKeywords[0]);
+                                            const firstKw = escapeHtmlAttr(allKeywords[0]);
                                             const remainCount = allKeywords.length - 1;
-                                            const safeTitle = escapeHtml(post.title || '');
-                                            const safeKeywords = allKeywords.map(escapeHtml).join('|||');
+                                            const safeTitle = escapeHtmlAttr(post.title || '');
+                                            const safeKeywords = allKeywords.map(escapeHtmlAttr).join('|||');
                                             if (remainCount > 0) {
-                                                keywordsHtml = '<span class="morpheme-preview" data-keywords="' + safeKeywords + '" data-title="' + safeTitle + '" onclick="handleMorphemeClick(this)" style="cursor:pointer;background:rgba(102,126,234,0.2);padding:3px 8px;border-radius:4px;font-size:11px;"><span style="color:#fff;">' + firstKw + '</span> <span style="color:#667eea;font-size:10px;">외 ' + remainCount + '개</span></span>';
+                                                keywordsHtml = '<span class="morpheme-preview" data-keywords="' + safeKeywords + '" data-title="' + safeTitle + '" onclick="handleMorphemeClick(this)" style="cursor:pointer;background:#667eea33;padding:3px 8px;border-radius:4px;font-size:11px"><span style="color:#fff">' + firstKw + '</span> <span style="color:#667eea;font-size:10px">외 ' + remainCount + '개</span></span>';
                                             } else {
-                                                keywordsHtml = '<span style="background:rgba(102,126,234,0.2);padding:3px 8px;border-radius:4px;font-size:11px;">' + firstKw + '</span>';
+                                                keywordsHtml = '<span style="background:#667eea33;padding:3px 8px;border-radius:4px;font-size:11px">' + firstKw + '</span>';
                                             }
                                         }
 
