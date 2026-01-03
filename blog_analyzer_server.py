@@ -9339,8 +9339,16 @@ def index():
                         <div class="stat-card">
                             <div class="stat-icon" style="background: #667eea33;">👁️</div>
                             <div class="stat-value">${(data.daily_visitors || 0).toLocaleString()}</div>
-                            <div class="stat-label">일일 방문자</div>
-                            ${weeklyAvg && weeklyAvg.count >= 3 ? `
+                            <div class="stat-label">오늘 방문자</div>
+                            ${data.yesterday_visitors > 0 ? `
+                            <div class="stat-sublabel" style="font-size: 10px; color: #ffffff80; margin-top: 4px;">
+                                어제: ${data.yesterday_visitors.toLocaleString()}명
+                                ${data.daily_visitors > data.yesterday_visitors ?
+                                    '<span style="color: #4CAF50;"> ▲' + Math.round((data.daily_visitors - data.yesterday_visitors) / data.yesterday_visitors * 100) + '%</span>' :
+                                    data.daily_visitors < data.yesterday_visitors ?
+                                    '<span style="color: #F44336;"> ▼' + Math.round((data.yesterday_visitors - data.daily_visitors) / data.yesterday_visitors * 100) + '%</span>' :
+                                    '<span style="color: #FFC107;"> ―</span>'}
+                            </div>` : weeklyAvg && weeklyAvg.count >= 3 ? `
                             <div class="stat-sublabel" style="font-size: 10px; color: #ffffff80; margin-top: 4px;">
                                 📊 ${weeklyAvg.count}일 평균: ${weeklyAvg.average.toLocaleString()}명
                             </div>` : weeklyAvg && weeklyAvg.count >= 1 ? `
