@@ -5184,6 +5184,82 @@ def index():
             right: 20px;
         }
 
+        /* 왼쪽 트렌드 사이드바 - PC에서만 표시 */
+        .trends-sidebar {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 180px;
+            z-index: 100;
+            display: none;
+        }
+
+        .trends-sidebar-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .trends-sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trends-sidebar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trends-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trends-sidebar-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .trends-sidebar-rank {
+            font-size: 11px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 18px;
+        }
+
+        .trends-sidebar-keyword {
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        @media (min-width: 1400px) {
+            .trends-sidebar {
+                display: block;
+            }
+            .trends-section {
+                display: none;
+            }
+        }
+
         .ad-sidebar-container {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
@@ -6553,6 +6629,16 @@ def index():
         <span class="float-icon">💬</span>
     </a>
 
+    <!-- 왼쪽 트렌드 사이드바 - PC에서만 표시 -->
+    <div class="trends-sidebar">
+        <div class="trends-sidebar-container">
+            <div class="trends-sidebar-title">🔥 실시간 인기</div>
+            <div id="trendsSidebarList" class="trends-sidebar-list">
+                <span style="color: #ffffff80; font-size: 11px;">로딩 중...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- 사이드바 광고 (160x600) - PC에서만 표시 -->
     <div class="ad-sidebar ad-sidebar-right">
         <div class="ad-sidebar-container">
@@ -7467,8 +7553,10 @@ def index():
         // =====================================================
         async function loadTrendKeywords() {
             const container = document.getElementById('trendsList');
+            const sidebarContainer = document.getElementById('trendsSidebarList');
             const sourceEl = document.getElementById('trendsSource');
             container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>';
+            if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">로딩 중...</span>';
             sourceEl.textContent = '';
             sourceEl.className = 'trends-source';
 
@@ -7477,6 +7565,7 @@ def index():
                 const data = await response.json();
 
                 if (data.trends && data.trends.length > 0) {
+                    // 메인 트렌드 리스트 (모바일/태블릿용)
                     container.innerHTML = data.trends.map((t, idx) => `
                         <div class="trend-item" onclick="copyKeyword('${t.keyword}')" title="클릭하여 복사">
                             <span class="trend-rank">${idx + 1}</span>
@@ -7485,14 +7574,26 @@ def index():
                         </div>
                     `).join('');
 
+                    // 사이드바 트렌드 리스트 (PC용)
+                    if (sidebarContainer) {
+                        sidebarContainer.innerHTML = data.trends.slice(0, 10).map((t, idx) => `
+                            <div class="trends-sidebar-item" onclick="copyKeyword('${t.keyword}')" title="클릭하여 복사">
+                                <span class="trends-sidebar-rank">${idx + 1}</span>
+                                <span class="trends-sidebar-keyword">${t.keyword}</span>
+                            </div>
+                        `).join('');
+                    }
+
                     // 출처 표시 (숨김)
                     sourceEl.textContent = '';
                     sourceEl.style.display = 'none';
                 } else {
                     container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
+                    if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">불러올 수 없음</span>';
                 }
             } catch (error) {
                 container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 로딩 실패</span>';
+                if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">로딩 실패</span>';
             }
         }
 
