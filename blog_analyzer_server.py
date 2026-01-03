@@ -105,10 +105,10 @@ class NaverBlogCrawler:
             # 6. 지수 계산 (주간 평균 사용)
             result['index'] = self._calculate_index(result, weekly_avg=weekly_avg, weekly_count=weekly_count)
 
-            # 7. 포스팅 지수 정보 (최근 15개 - 더보기 버튼으로 확장)
+            # 7. 포스팅 지수 정보 (최근 5개)
             if result.get('recent_posts'):
                 result['posts_with_index'] = self._get_posts_with_index(
-                    blog_id, result['recent_posts'], max_posts=15
+                    blog_id, result['recent_posts'], max_posts=5
                 )
 
         except Exception as e:
@@ -9998,13 +9998,10 @@ def index():
                                         // 발행일 포맷
                                         const dateDisplay = formatRelativeDate(post.date);
 
-                                        // 더보기 숨김 처리
-                                        const hiddenClass = idx >= 5 ? 'hidden-post-row' : '';
-
                                         // 제목 이스케이핑
                                         const escapedTitle = (post.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-                                        return '<tr class="' + hiddenClass + '">' +
+                                        return '<tr>' +
                                             '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + escapedTitle + '">' + escapedTitle + '</a></td>' +
                                             '<td style="text-align: center;">' + missingStatus + '</td>' +
                                             '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
@@ -10019,13 +10016,6 @@ def index():
                                 </tbody>
                             </table>
                         </div>
-                        ${data.posts_with_index.length > 5 ? `
-                        <div class="load-more-container" id="loadMoreContainer">
-                            <button class="load-more-btn" onclick="toggleMorePosts()">
-                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개 남음)</span>
-                            </button>
-                        </div>
-                        ` : ''}
                     </div>
 
                     <!-- 형태소 분석 섹션 -->
