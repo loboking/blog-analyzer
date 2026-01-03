@@ -9404,6 +9404,64 @@ def index():
                             ${seoScore.exposure < 15 ? '<div class="seo-rec-item">💡 롱테일 키워드로 검색 노출률을 높이세요</div>' : ''}
                         </div>
                         ` : ''}
+
+                        <!-- SEO 체크리스트 -->
+                        <div class="seo-checklist" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ffffff15;">
+                            <div style="font-size: 12px; font-weight: 600; color: #ffffff; margin-bottom: 10px;">📋 SEO 체크리스트 (최근 ${Math.min(posts.length, 10)}개 포스트 평균)</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                ${(() => {
+                                    const recentPosts = posts.slice(0, 10);
+                                    const checks = {
+                                        titleLen: recentPosts.filter(p => {
+                                            const len = (p.title || '').length;
+                                            return len >= 20 && len <= 45;
+                                        }).length,
+                                        contentLen: recentPosts.filter(p => (p.char_count || 0) >= 1500).length,
+                                        imageCount: recentPosts.filter(p => {
+                                            const imgs = p.images || 0;
+                                            return imgs >= 3 && imgs <= 20;
+                                        }).length,
+                                        subheading: recentPosts.filter(p => (p.subheading_count || 0) >= 2).length,
+                                        indexed: recentPosts.filter(p => p.exposure === 'indexed').length
+                                    };
+                                    const total = recentPosts.length || 1;
+                                    const pct = (n) => Math.round((n / total) * 100);
+                                    const icon = (n) => pct(n) >= 70 ? '✅' : pct(n) >= 40 ? '⚠️' : '❌';
+                                    const color = (n) => pct(n) >= 70 ? '#00C853' : pct(n) >= 40 ? '#FFC107' : '#F44336';
+
+                                    return `
+                                        <div style="background: ${color(checks.titleLen)}15; padding: 8px 10px; border-radius: 6px; border-left: 3px solid ${color(checks.titleLen)};">
+                                            <span>${icon(checks.titleLen)}</span>
+                                            <span style="font-size: 11px; color: #ffffffcc;">제목 길이 (20-45자)</span>
+                                            <span style="float: right; font-size: 11px; color: ${color(checks.titleLen)}; font-weight: 600;">${checks.titleLen}/${total}</span>
+                                        </div>
+                                        <div style="background: ${color(checks.contentLen)}15; padding: 8px 10px; border-radius: 6px; border-left: 3px solid ${color(checks.contentLen)};">
+                                            <span>${icon(checks.contentLen)}</span>
+                                            <span style="font-size: 11px; color: #ffffffcc;">본문 길이 (1500자+)</span>
+                                            <span style="float: right; font-size: 11px; color: ${color(checks.contentLen)}; font-weight: 600;">${checks.contentLen}/${total}</span>
+                                        </div>
+                                        <div style="background: ${color(checks.imageCount)}15; padding: 8px 10px; border-radius: 6px; border-left: 3px solid ${color(checks.imageCount)};">
+                                            <span>${icon(checks.imageCount)}</span>
+                                            <span style="font-size: 11px; color: #ffffffcc;">이미지 수 (3-20개)</span>
+                                            <span style="float: right; font-size: 11px; color: ${color(checks.imageCount)}; font-weight: 600;">${checks.imageCount}/${total}</span>
+                                        </div>
+                                        <div style="background: ${color(checks.subheading)}15; padding: 8px 10px; border-radius: 6px; border-left: 3px solid ${color(checks.subheading)};">
+                                            <span>${icon(checks.subheading)}</span>
+                                            <span style="font-size: 11px; color: #ffffffcc;">소제목 사용 (2개+)</span>
+                                            <span style="float: right; font-size: 11px; color: ${color(checks.subheading)}; font-weight: 600;">${checks.subheading}/${total}</span>
+                                        </div>
+                                        <div style="background: ${color(checks.indexed)}15; padding: 8px 10px; border-radius: 6px; border-left: 3px solid ${color(checks.indexed)}; grid-column: span 2;">
+                                            <span>${icon(checks.indexed)}</span>
+                                            <span style="font-size: 11px; color: #ffffffcc;">검색 노출 상태</span>
+                                            <span style="float: right; font-size: 11px; color: ${color(checks.indexed)}; font-weight: 600;">${checks.indexed}/${total} 정상 노출</span>
+                                        </div>
+                                    `;
+                                })()}
+                            </div>
+                            <div style="margin-top: 10px; font-size: 10px; color: #ffffff60; text-align: center;">
+                                ✅ 70%이상 | ⚠️ 40-69% | ❌ 40%미만
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 프로필 카드 -->
