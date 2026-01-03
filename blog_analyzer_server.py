@@ -6584,7 +6584,17 @@ def index():
                 <span class="header-badge">🎯 키워드 경쟁도</span>
             </div>
         </header>
-        
+
+        <!-- 쿠팡 파트너스 광고 (메인) -->
+        <div style="margin-bottom: 24px; padding: 16px; background: #ffffff08; border-radius: 12px; border: 1px solid #ffffff1a; text-align: center;">
+            <div style="margin-bottom: 10px; font-size: 11px; color: #ffffff66;">🛒 오늘의 추천</div>
+            <script src="https://ads-partners.coupang.com/g.js"></script>
+            <script>
+                new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});
+            </script>
+            <p style="margin-top: 8px; font-size: 10px; color: #ffffff40;">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
+        </div>
+
         <div class="search-box">
             <form class="search-form" onsubmit="analyzeBlog(event)">
                 <div class="input-wrapper">
@@ -6643,16 +6653,6 @@ def index():
                 </div>
             </div>
             <div id="historyList" class="history-list"></div>
-        </div>
-
-        <!-- 쿠팡 파트너스 광고 (메인) -->
-        <div style="margin: 24px 0; padding: 16px; background: #ffffff08; border-radius: 12px; border: 1px solid #ffffff1a; text-align: center;">
-            <div style="margin-bottom: 10px; font-size: 11px; color: #ffffff66;">🛒 오늘의 추천</div>
-            <script src="https://ads-partners.coupang.com/g.js"></script>
-            <script>
-                new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});
-            </script>
-            <p style="margin-top: 8px; font-size: 10px; color: #ffffff40;">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
         </div>
 
         <div id="result"></div>
