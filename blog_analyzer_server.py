@@ -3827,6 +3827,45 @@ def index():
             border-radius: 3px;
         }
 
+        /* 모바일 테이블 스타일 */
+        @media (max-width: 768px) {
+            .table-scroll-container {
+                overflow-x: auto;
+                max-height: 350px;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .post-diagnosis-table {
+                font-size: 11px;
+                min-width: 700px;
+            }
+
+            .post-diagnosis-table th {
+                padding: 10px 8px;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+
+            .post-diagnosis-table td {
+                padding: 10px 8px;
+            }
+
+            .post-diagnosis-table .post-title-link {
+                max-width: 120px;
+                font-size: 11px;
+            }
+
+            .analyze-btn {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+
+            .morpheme-preview {
+                font-size: 10px !important;
+                padding: 2px 6px !important;
+            }
+        }
+
         .post-date-cell {
             color: rgba(255,255,255,0.5);
             font-size: 12px;
