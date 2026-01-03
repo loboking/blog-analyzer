@@ -3464,7 +3464,22 @@ def index():
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .profile-card {
             background: rgba(255,255,255,0.05);
             border-radius: 20px;
@@ -6930,10 +6945,10 @@ def index():
                 <span id="uniqueBlogs" style="color: #f093fb; font-weight: 600;">0</span>개 블로그
             </div>
 
-            <!-- 키워드 추천 섹션 -->
-            <div class="keyword-suggest-box">
+            <!-- 키워드 추천 섹션 (이스터에그 - 숨김) -->
+            <div class="keyword-suggest-box" id="hiddenKeywordBox" style="display: none;">
                 <div class="keyword-input-wrapper">
-                    <input type="text" id="keywordInput" class="keyword-input" placeholder="키워드를 입력하면 관련 키워드를 추천해드립니다" autocomplete="off">
+                    <input type="text" id="keywordInput" class="keyword-input" placeholder="🔓 비밀 기능! 키워드를 입력하세요" autocomplete="off">
                     <button type="button" class="keyword-suggest-btn" onclick="getKeywordSuggestions()">연관 키워드</button>
                 </div>
                 <div id="suggestResults" class="suggest-results">
@@ -6948,6 +6963,14 @@ def index():
             <!-- PC/태블릿용 -->
             <div class="trends-header">
                 <span class="trends-title">🔥 실시간 인기 키워드</span>
+                <!-- 이스터에그 클릭 영역 -->
+                <span id="easterEggArea" onclick="handleEasterEggClick()" style="
+                    flex: 1;
+                    cursor: default;
+                    min-width: 50px;
+                    height: 20px;
+                    user-select: none;
+                "></span>
                 <span id="trendsSource" class="trends-source"></span>
                 <button class="trends-refresh-btn" onclick="loadTrendKeywords()">새로고침</button>
             </div>
@@ -7932,6 +7955,66 @@ def index():
             if (score >= 35) return 80;
             if (score >= 30) return 88;
             return 95;
+        }
+
+        // =====================================================
+        // 이스터에그 - 연관 키워드 숨김 기능
+        // =====================================================
+        let easterEggClicks = 0;
+        let easterEggTimer = null;
+        const EASTER_EGG_TARGET = 10;
+
+        function handleEasterEggClick() {
+            easterEggClicks++;
+
+            // 3초 내에 10번 클릭해야 함
+            if (easterEggTimer) clearTimeout(easterEggTimer);
+            easterEggTimer = setTimeout(() => {
+                easterEggClicks = 0;
+            }, 3000);
+
+            // 10번 클릭 완료
+            if (easterEggClicks >= EASTER_EGG_TARGET) {
+                const hiddenBox = document.getElementById('hiddenKeywordBox');
+                if (hiddenBox) {
+                    if (hiddenBox.style.display === 'none') {
+                        hiddenBox.style.display = 'block';
+                        hiddenBox.style.animation = 'slideIn 0.3s ease-out';
+                        // 작은 효과
+                        showToast('🔓 비밀 기능 해금! 연관 키워드 검색');
+                    } else {
+                        hiddenBox.style.display = 'none';
+                        showToast('🔒 비밀 기능 숨김');
+                    }
+                }
+                easterEggClicks = 0;
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 99999;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                animation: fadeInUp 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
         }
 
         async function loadTotalStats() {
