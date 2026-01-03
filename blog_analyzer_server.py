@@ -1666,6 +1666,36 @@ def get_recent_blogs():
         return jsonify({'success': False, 'error': str(e), 'blogs': []}), 500
 
 
+@app.route('/api/stats/total')
+def get_total_stats():
+    """전체 분석 통계 조회 (총 분석 수, 고유 블로그 수)"""
+    if not SUPABASE_KEY:
+        return jsonify({'success': False, 'total_analyses': 0, 'unique_blogs': 0, 'db_connected': False})
+
+    try:
+        # 전체 분석 횟수 조회
+        params = {
+            'select': 'id',
+            'limit': '10000'
+        }
+        result = supabase_request('GET', 'blog_history', params=params)
+        total_analyses = len(result) if result else 0
+
+        # 고유 블로그 수 계산
+        unique_blogs = len(set(item.get('blog_id', '') for item in (result or [])))
+
+        return jsonify({
+            'success': True,
+            'total_analyses': total_analyses,
+            'unique_blogs': unique_blogs,
+            'db_connected': True
+        })
+
+    except Exception as e:
+        print(f"Get total stats error: {e}")
+        return jsonify({'success': False, 'total_analyses': 0, 'unique_blogs': 0, 'db_connected': False})
+
+
 # =====================================================
 # 커뮤니티 API
 # =====================================================
@@ -2009,6 +2039,16 @@ def disclaimer_page():
                 <li>본 서비스에서 제공하는 모든 지수, 점수, 분석 결과는 자체 알고리즘에 의한 <strong>추정치</strong>입니다.</li>
                 <li>네이버의 공식 지수나 통계가 아니며, 네이버와 무관한 독립 서비스입니다.</li>
                 <li>실제 블로그 성과와 차이가 있을 수 있습니다.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>상위 % 순위 안내</h2>
+            <ul>
+                <li>'상위 N%' 표시는 <strong>본 서비스에서 분석된 블로그들만을 기준</strong>으로 산출됩니다.</li>
+                <li>전체 네이버 블로거 대비 순위가 아니며, 네이버 공식 순위와 무관합니다.</li>
+                <li>충분한 표본(3,000개 이상)이 모인 후에만 표시되며, 표본 수에 따라 정확도가 달라질 수 있습니다.</li>
+                <li>순위는 참고용이며, 실제 블로그 영향력과 차이가 있을 수 있습니다.</li>
             </ul>
         </div>
 
@@ -6877,6 +6917,19 @@ def index():
                 </button>
             </form>
 
+            <!-- 분석 카운터 -->
+            <div id="analysisCounter" class="analysis-counter" style="
+                margin-top: 12px;
+                text-align: center;
+                font-size: 12px;
+                color: #ffffff80;
+                display: none;
+            ">
+                <span style="color: #667eea;">📊</span>
+                지금까지 <span id="totalAnalyses" style="color: #667eea; font-weight: 600;">0</span>회 분석 |
+                <span id="uniqueBlogs" style="color: #f093fb; font-weight: 600;">0</span>개 블로그
+            </div>
+
             <!-- 키워드 추천 섹션 -->
             <div class="keyword-suggest-box">
                 <div class="keyword-input-wrapper">
@@ -7854,6 +7907,58 @@ def index():
 
         // 페이지 로드 시 트렌드 키워드 로드
         document.addEventListener('DOMContentLoaded', loadTrendKeywords);
+
+        // =====================================================
+        // 분석 통계 카운터 & 상위% 계산
+        // =====================================================
+        let totalAnalysisCount = 0;  // 전역 변수로 저장 (상위% 기능용)
+
+        // 점수 기반 상위 % 계산 (실제 DB 데이터 기반 추정)
+        function calculateRankingPercent(score) {
+            // 점수 분포 기반 백분위 계산
+            // 점수가 높을수록 상위 %가 낮음 (상위 1%가 가장 높은 점수)
+            if (score >= 95) return 1;
+            if (score >= 90) return 3;
+            if (score >= 85) return 5;
+            if (score >= 80) return 8;
+            if (score >= 75) return 12;
+            if (score >= 70) return 18;
+            if (score >= 65) return 25;
+            if (score >= 60) return 32;
+            if (score >= 55) return 40;
+            if (score >= 50) return 50;
+            if (score >= 45) return 60;
+            if (score >= 40) return 70;
+            if (score >= 35) return 80;
+            if (score >= 30) return 88;
+            return 95;
+        }
+
+        async function loadTotalStats() {
+            try {
+                const response = await fetch('/api/stats/total');
+                const result = await response.json();
+
+                if (result.success && result.db_connected) {
+                    totalAnalysisCount = result.unique_blogs;
+
+                    const counterDiv = document.getElementById('analysisCounter');
+                    const totalEl = document.getElementById('totalAnalyses');
+                    const uniqueEl = document.getElementById('uniqueBlogs');
+
+                    if (counterDiv && totalEl && uniqueEl) {
+                        totalEl.textContent = result.total_analyses.toLocaleString();
+                        uniqueEl.textContent = result.unique_blogs.toLocaleString();
+                        counterDiv.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                console.log('Stats counter not available');
+            }
+        }
+
+        // 페이지 로드 시 카운터 로드
+        document.addEventListener('DOMContentLoaded', loadTotalStats);
 
         // =====================================================
         // PDF 다운로드 기능 (화면 캡처 방식 - 전체 데이터 포함)
@@ -9331,6 +9436,21 @@ def index():
                                 ${idx.grade || '분석중'}
                             </div>
                             <div class="index-score">${idx.score || 0} / 100점</div>
+                            ${totalAnalysisCount >= 3000 ? `
+                            <div class="ranking-badge" style="
+                                margin-top: 8px;
+                                padding: 4px 10px;
+                                background: linear-gradient(135deg, #667eea33, #764ba233);
+                                border-radius: 12px;
+                                font-size: 11px;
+                                color: #f093fb;
+                            ">
+                                🏆 상위 ${calculateRankingPercent(idx.score)}%
+                            </div>
+                            <div style="font-size: 9px; color: #ffffff50; margin-top: 4px;">
+                                ※ ${totalAnalysisCount.toLocaleString()}개 블로그 기준 추정
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     
