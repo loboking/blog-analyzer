@@ -4048,6 +4048,29 @@ def index():
         @media (max-width: 768px) {
             .charts-grid {
                 grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .chart-card {
+                padding: 14px;
+            }
+
+            .chart-card[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+
+            .chart-title {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+
+            .chart-container {
+                height: 160px;
+            }
+
+            .chart-container-large {
+                height: 180px;
+                overflow-x: auto;
             }
         }
 
@@ -6334,9 +6357,9 @@ def index():
             }
 
             .trends-section {
-                padding: 10px 14px !important;
-                border-radius: 12px !important;
-                margin-bottom: 16px !important;
+                padding: 8px 12px !important;
+                border-radius: 10px !important;
+                margin-bottom: 12px !important;
             }
 
             .trends-header {
@@ -6347,51 +6370,53 @@ def index():
                 display: none !important;
             }
 
-            /* 모바일 롤링 트렌드 */
+            /* 모바일 롤링 트렌드 - 한 줄 */
             .trends-mobile-rolling {
                 display: flex !important;
                 align-items: center;
-                gap: 10px;
+                gap: 8px;
+                height: 22px;
             }
 
             .trends-mobile-label {
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 600;
-                color: #667eea;
+                color: #f093fb;
                 white-space: nowrap;
             }
 
             .trends-rolling-container {
                 flex: 1;
                 overflow: hidden;
-                height: 24px;
+                height: 20px;
                 position: relative;
             }
 
             .trends-rolling-item {
                 position: absolute;
                 width: 100%;
+                height: 20px;
                 display: flex;
                 align-items: center;
                 gap: 6px;
                 opacity: 0;
-                transform: translateY(10px);
-                transition: all 0.4s ease;
+                transform: translateX(20px);
+                transition: all 0.3s ease;
             }
 
             .trends-rolling-item.active {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
 
             .trends-rolling-rank {
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 700;
-                color: #f093fb;
+                color: #667eea;
             }
 
             .trends-rolling-keyword {
-                font-size: 13px;
+                font-size: 12px;
                 color: #fff;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -6402,14 +6427,11 @@ def index():
                 background: rgba(102, 126, 234, 0.3);
                 border: none;
                 color: #fff;
-                padding: 4px 10px;
-                border-radius: 12px;
-                font-size: 11px;
+                padding: 3px 8px;
+                border-radius: 10px;
+                font-size: 10px;
                 cursor: pointer;
                 white-space: nowrap;
-                display: flex;
-                align-items: center;
-                gap: 4px;
             }
 
         /* 트렌드 팝업 */
