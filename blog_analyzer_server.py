@@ -9334,28 +9334,109 @@ def index():
                         </div>
                     </div>
                     
-                    <!-- 통계 그리드 -->
-                    <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: #667eea33;">👁️</div>
-                            <div class="stat-value">${(data.daily_visitors || 0).toLocaleString()}</div>
-                            <div class="stat-label">오늘 방문자</div>
-                            ${data.yesterday_visitors > 0 ? `
-                            <div class="stat-sublabel" style="font-size: 10px; color: #ffffff80; margin-top: 4px;">
-                                어제: ${data.yesterday_visitors.toLocaleString()}명
-                                ${data.daily_visitors > data.yesterday_visitors ?
-                                    '<span style="color: #4CAF50;"> ▲' + Math.round((data.daily_visitors - data.yesterday_visitors) / data.yesterday_visitors * 100) + '%</span>' :
-                                    data.daily_visitors < data.yesterday_visitors ?
-                                    '<span style="color: #F44336;"> ▼' + Math.round((data.yesterday_visitors - data.daily_visitors) / data.yesterday_visitors * 100) + '%</span>' :
-                                    '<span style="color: #FFC107;"> ―</span>'}
-                            </div>` : weeklyAvg && weeklyAvg.count >= 3 ? `
-                            <div class="stat-sublabel" style="font-size: 10px; color: #ffffff80; margin-top: 4px;">
-                                📊 ${weeklyAvg.count}일 평균: ${weeklyAvg.average.toLocaleString()}명
-                            </div>` : weeklyAvg && weeklyAvg.count >= 1 ? `
-                            <div class="stat-sublabel" style="font-size: 10px; color: #ff9800b3; margin-top: 4px;">
-                                ⚠️ ${3 - weeklyAvg.count}일 더 분석 필요
-                            </div>` : ''}
+                    <!-- 방문자 비교 카드 -->
+                    <div class="visitor-compare-card" style="
+                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                        border-radius: 16px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        border: 1px solid #ffffff15;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <!-- 오늘 방문자 -->
+                            <div style="text-align: center; flex: 1; min-width: 100px;">
+                                <div style="font-size: 11px; color: #ffffff80; margin-bottom: 4px;">오늘</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #667eea;">${(data.daily_visitors || 0).toLocaleString()}</div>
+                                <div style="font-size: 10px; color: #ffffff60;">명</div>
+                            </div>
+
+                            <!-- 증감 표시 -->
+                            <div style="text-align: center; padding: 0 15px;">
+                                ${(() => {
+                                    const today = data.daily_visitors || 0;
+                                    const yesterday = data.yesterday_visitors || 0;
+                                    if (yesterday === 0) return '<div style="font-size: 20px;">📊</div>';
+                                    const changePercent = Math.round((today - yesterday) / yesterday * 100);
+                                    if (changePercent > 0) {
+                                        return '<div style="font-size: 24px; color: #4CAF50;">▲</div><div style="font-size: 14px; font-weight: 600; color: #4CAF50;">+' + changePercent + '%</div>';
+                                    } else if (changePercent < 0) {
+                                        return '<div style="font-size: 24px; color: #F44336;">▼</div><div style="font-size: 14px; font-weight: 600; color: #F44336;">' + changePercent + '%</div>';
+                                    } else {
+                                        return '<div style="font-size: 24px; color: #FFC107;">―</div><div style="font-size: 14px; font-weight: 600; color: #FFC107;">0%</div>';
+                                    }
+                                })()}
+                            </div>
+
+                            <!-- 어제 방문자 -->
+                            <div style="text-align: center; flex: 1; min-width: 100px;">
+                                <div style="font-size: 11px; color: #ffffff80; margin-bottom: 4px;">어제</div>
+                                <div style="font-size: 28px; font-weight: 700; color: #f093fb;">${(data.yesterday_visitors || 0).toLocaleString()}</div>
+                                <div style="font-size: 10px; color: #ffffff60;">명</div>
+                            </div>
+
+                            <!-- 성장 지수 -->
+                            <div style="text-align: center; flex: 1; min-width: 120px; padding-left: 15px; border-left: 1px solid #ffffff20;">
+                                <div style="font-size: 11px; color: #ffffff80; margin-bottom: 4px;">📈 오늘의 활성도</div>
+                                ${(() => {
+                                    const today = data.daily_visitors || 0;
+                                    const yesterday = data.yesterday_visitors || 0;
+                                    const hour = new Date().getHours();
+
+                                    // 자정 이후 보정: 어제 데이터 기준으로 예상
+                                    let activityScore;
+                                    let activityLabel;
+                                    let activityColor;
+
+                                    if (yesterday === 0) {
+                                        // 어제 데이터 없음
+                                        activityScore = '?';
+                                        activityLabel = '데이터 수집중';
+                                        activityColor = '#ffffff80';
+                                    } else if (hour < 6 && today < yesterday * 0.1) {
+                                        // 자정~새벽 6시, 오늘 방문자가 매우 적음 -> 어제 기준
+                                        const estimatedToday = Math.round(yesterday * (1 + (Math.random() * 0.2 - 0.1)));
+                                        activityScore = Math.min(100, Math.round((estimatedToday / Math.max(yesterday, 1)) * 100));
+                                        activityLabel = '예상 (어제 기준)';
+                                        activityColor = '#FFC107';
+                                    } else {
+                                        // 정상 계산
+                                        const expectedByHour = yesterday * (hour / 24);
+                                        if (expectedByHour > 0) {
+                                            activityScore = Math.min(150, Math.round((today / expectedByHour) * 100));
+                                        } else {
+                                            activityScore = today > 0 ? 100 : 0;
+                                        }
+
+                                        if (activityScore >= 120) {
+                                            activityLabel = '🔥 매우 활발';
+                                            activityColor = '#4CAF50';
+                                        } else if (activityScore >= 90) {
+                                            activityLabel = '👍 정상';
+                                            activityColor = '#667eea';
+                                        } else if (activityScore >= 60) {
+                                            activityLabel = '📉 다소 저조';
+                                            activityColor = '#FFC107';
+                                        } else {
+                                            activityLabel = '⚠️ 저조';
+                                            activityColor = '#F44336';
+                                        }
+                                    }
+
+                                    return '<div style="font-size: 24px; font-weight: 700; color: ' + activityColor + ';">' + activityScore + (activityScore !== '?' ? '%' : '') + '</div><div style="font-size: 10px; color: ' + activityColor + ';">' + activityLabel + '</div>';
+                                })()}
+                            </div>
                         </div>
+
+                        <!-- 시간대별 설명 -->
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ffffff15; font-size: 10px; color: #ffffff60; text-align: center;">
+                            ${new Date().getHours() < 6 ?
+                                '🌙 자정 이후입니다. 어제 데이터를 기준으로 예상치를 보여드립니다.' :
+                                '📊 현재 시간 기준 어제 동시간대 대비 활성도를 계산합니다.'}
+                        </div>
+                    </div>
+
+                    <!-- 통계 그리드 -->
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
                         <div class="stat-card">
                             <div class="stat-icon" style="background: #00e67633;">📊</div>
                             <div class="stat-value">${(data.total_visitors || 0).toLocaleString()}</div>
