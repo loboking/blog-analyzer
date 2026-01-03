@@ -6334,49 +6334,173 @@ def index():
             }
 
             .trends-section {
-                padding: 12px !important;
+                padding: 10px 14px !important;
                 border-radius: 12px !important;
+                margin-bottom: 16px !important;
             }
 
             .trends-header {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .trends-title {
-                font-size: 14px;
+                display: none !important;
             }
 
             .trends-list {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 8px;
-                padding-bottom: 8px;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: thin;
+                display: none !important;
             }
 
-            .trends-list::-webkit-scrollbar {
-                height: 4px;
+            /* 모바일 롤링 트렌드 */
+            .trends-mobile-rolling {
+                display: flex !important;
+                align-items: center;
+                gap: 10px;
             }
 
-            .trends-list::-webkit-scrollbar-track {
-                background: rgba(255,255,255,0.1);
-                border-radius: 2px;
-            }
-
-            .trends-list::-webkit-scrollbar-thumb {
-                background: rgba(102,126,234,0.5);
-                border-radius: 2px;
-            }
-
-            .trend-item {
-                font-size: 12px;
-                padding: 6px 10px;
-                flex-shrink: 0;
+            .trends-mobile-label {
+                font-size: 11px;
+                font-weight: 600;
+                color: #667eea;
                 white-space: nowrap;
             }
+
+            .trends-rolling-container {
+                flex: 1;
+                overflow: hidden;
+                height: 24px;
+                position: relative;
+            }
+
+            .trends-rolling-item {
+                position: absolute;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                opacity: 0;
+                transform: translateY(10px);
+                transition: all 0.4s ease;
+            }
+
+            .trends-rolling-item.active {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .trends-rolling-rank {
+                font-size: 11px;
+                font-weight: 700;
+                color: #f093fb;
+            }
+
+            .trends-rolling-keyword {
+                font-size: 13px;
+                color: #fff;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .trends-expand-btn {
+                background: rgba(102, 126, 234, 0.3);
+                border: none;
+                color: #fff;
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 11px;
+                cursor: pointer;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+        /* 트렌드 팝업 */
+        .trends-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .trends-popup {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .trends-popup-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trends-popup-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .trends-popup-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .trends-popup-list {
+            padding: 16px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .trends-popup-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trends-popup-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .trends-popup-rank {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 24px;
+        }
+
+        .trends-popup-keyword {
+            flex: 1;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .trends-popup-category {
+            font-size: 11px;
+            background: rgba(240, 147, 251, 0.2);
+            padding: 3px 8px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.7);
+        }
 
             /* 최근 분석 기록 가로 스크롤 */
             .history-list {
@@ -6707,6 +6831,7 @@ def index():
 
         <!-- 트렌드 키워드 섹션 -->
         <div id="trendsSection" class="trends-section">
+            <!-- PC/태블릿용 -->
             <div class="trends-header">
                 <span class="trends-title">🔥 실시간 인기 키워드</span>
                 <span id="trendsSource" class="trends-source"></span>
@@ -6714,6 +6839,14 @@ def index():
             </div>
             <div id="trendsList" class="trends-list">
                 <span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>
+            </div>
+            <!-- 모바일용 롤링 -->
+            <div class="trends-mobile-rolling" style="display: none;">
+                <span class="trends-mobile-label">🔥 인기</span>
+                <div class="trends-rolling-container" id="trendsRollingContainer">
+                    <span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>
+                </div>
+                <button class="trends-expand-btn" onclick="openTrendsPopup()">전체 ▶</button>
             </div>
         </div>
 
@@ -7551,12 +7684,18 @@ def index():
         // =====================================================
         // 트렌드 키워드
         // =====================================================
+        let trendKeywordsData = [];
+        let trendRollingIndex = 0;
+        let trendRollingInterval = null;
+
         async function loadTrendKeywords() {
             const container = document.getElementById('trendsList');
             const sidebarContainer = document.getElementById('trendsSidebarList');
+            const rollingContainer = document.getElementById('trendsRollingContainer');
             const sourceEl = document.getElementById('trendsSource');
             container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>';
             if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">로딩 중...</span>';
+            if (rollingContainer) rollingContainer.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>';
             sourceEl.textContent = '';
             sourceEl.className = 'trends-source';
 
@@ -7565,7 +7704,9 @@ def index():
                 const data = await response.json();
 
                 if (data.trends && data.trends.length > 0) {
-                    // 메인 트렌드 리스트 (모바일/태블릿용)
+                    trendKeywordsData = data.trends;
+
+                    // 메인 트렌드 리스트 (태블릿용)
                     container.innerHTML = data.trends.map((t, idx) => `
                         <div class="trend-item" onclick="copyKeyword('${t.keyword}')" title="클릭하여 복사">
                             <span class="trend-rank">${idx + 1}</span>
@@ -7584,17 +7725,70 @@ def index():
                         `).join('');
                     }
 
+                    // 모바일 롤링용
+                    if (rollingContainer) {
+                        rollingContainer.innerHTML = data.trends.slice(0, 10).map((t, idx) => `
+                            <div class="trends-rolling-item ${idx === 0 ? 'active' : ''}" data-index="${idx}" onclick="copyKeyword('${t.keyword}')">
+                                <span class="trends-rolling-rank">${idx + 1}</span>
+                                <span class="trends-rolling-keyword">${t.keyword}</span>
+                            </div>
+                        `).join('');
+                        startTrendRolling();
+                    }
+
                     // 출처 표시 (숨김)
                     sourceEl.textContent = '';
                     sourceEl.style.display = 'none';
                 } else {
                     container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
                     if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">불러올 수 없음</span>';
+                    if (rollingContainer) rollingContainer.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">없음</span>';
                 }
             } catch (error) {
                 container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 로딩 실패</span>';
                 if (sidebarContainer) sidebarContainer.innerHTML = '<span style="color: #ffffff80; font-size: 11px;">로딩 실패</span>';
+                if (rollingContainer) rollingContainer.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">실패</span>';
             }
+        }
+
+        function startTrendRolling() {
+            if (trendRollingInterval) clearInterval(trendRollingInterval);
+            const items = document.querySelectorAll('.trends-rolling-item');
+            if (items.length <= 1) return;
+
+            trendRollingInterval = setInterval(() => {
+                items.forEach(item => item.classList.remove('active'));
+                trendRollingIndex = (trendRollingIndex + 1) % items.length;
+                items[trendRollingIndex].classList.add('active');
+            }, 3000);
+        }
+
+        function openTrendsPopup() {
+            if (trendKeywordsData.length === 0) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'trends-popup-overlay';
+            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+            overlay.innerHTML = `
+                <div class="trends-popup">
+                    <div class="trends-popup-header">
+                        <span class="trends-popup-title">🔥 실시간 인기 키워드</span>
+                        <button class="trends-popup-close" onclick="this.closest('.trends-popup-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="trends-popup-list">
+                        ${trendKeywordsData.map((t, idx) => `
+                            <div class="trends-popup-item" onclick="copyKeyword('${t.keyword}'); this.closest('.trends-popup-overlay').remove();">
+                                <span class="trends-popup-rank">${idx + 1}</span>
+                                <span class="trends-popup-keyword">${t.keyword}</span>
+                                <span class="trends-popup-category">${t.category}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
         }
 
         // 페이지 로드 시 트렌드 키워드 로드
