@@ -9308,6 +9308,9 @@ def index():
             currentAnalysisData = data;
             saveFullHistory(data);
 
+            // 게시글 페이지네이션 리셋
+            postsShowCount = 5;
+
             // 주간 평균 계산
             const weeklyAvg = getWeeklyAverage(data.blog_id);
 
@@ -9878,7 +9881,7 @@ def index():
                         ${data.posts_with_index.length > 5 ? `
                         <div class="load-more-container" id="loadMoreContainer">
                             <button class="load-more-btn" onclick="toggleMorePosts()">
-                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개)</span>
+                                <span id="loadMoreText">+ 더보기 (${data.posts_with_index.length - 5}개 남음)</span>
                             </button>
                         </div>
                         ` : ''}
@@ -10451,30 +10454,61 @@ def index():
             }
         }
 
-        // 포스팅 지수 더보기 토글
-        let postsExpanded = false;
+        // 포스팅 지수 더보기 (5개씩 페이지네이션)
+        let postsShowCount = 5;  // 현재 보이는 개수
+        const postsPerPage = 5;  // 한 번에 로드할 개수
+
         function toggleMorePosts() {
-            const hiddenRows = document.querySelectorAll('.hidden-post-row');
+            const allRows = document.querySelectorAll('#postsTableBody tr');
             const btn = document.querySelector('.load-more-btn');
             const loadMoreText = document.getElementById('loadMoreText');
+            const totalPosts = allRows.length;
 
-            postsExpanded = !postsExpanded;
+            // 5개 더 보여주기
+            const newShowCount = Math.min(postsShowCount + postsPerPage, totalPosts);
 
-            hiddenRows.forEach(row => {
-                if (postsExpanded) {
+            allRows.forEach((row, idx) => {
+                if (idx < newShowCount) {
+                    row.classList.remove('hidden-post-row');
                     row.classList.add('show');
-                } else {
+                }
+            });
+
+            postsShowCount = newShowCount;
+            const remaining = totalPosts - postsShowCount;
+
+            if (remaining > 0) {
+                loadMoreText.textContent = '+ 더보기 (' + remaining + '개 남음)';
+            } else {
+                // 모두 표시됨 - 버튼을 접기로 변경
+                loadMoreText.textContent = '- 접기';
+                btn.classList.add('expanded');
+                btn.onclick = function() { collapseMorePosts(); };
+            }
+        }
+
+        function collapseMorePosts() {
+            const allRows = document.querySelectorAll('#postsTableBody tr');
+            const btn = document.querySelector('.load-more-btn');
+            const loadMoreText = document.getElementById('loadMoreText');
+            const totalPosts = allRows.length;
+
+            // 처음 5개만 보여주기
+            allRows.forEach((row, idx) => {
+                if (idx >= 5) {
+                    row.classList.add('hidden-post-row');
                     row.classList.remove('show');
                 }
             });
 
-            if (postsExpanded) {
-                loadMoreText.textContent = '- 접기';
-                btn.classList.add('expanded');
-            } else {
-                loadMoreText.textContent = '+ 더보기 (' + hiddenRows.length + '개)';
-                btn.classList.remove('expanded');
-            }
+            postsShowCount = 5;
+            const remaining = totalPosts - 5;
+            loadMoreText.textContent = '+ 더보기 (' + remaining + '개 남음)';
+            btn.classList.remove('expanded');
+            btn.onclick = function() { toggleMorePosts(); };
+
+            // 테이블 상단으로 스크롤
+            document.querySelector('.post-diagnosis-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // 키워드 팝업 표시 함수 (ID로 호출)
