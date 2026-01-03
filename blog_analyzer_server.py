@@ -9241,14 +9241,18 @@ def index():
                                         const allKeywords = getPostKeywords(post, 10);
                                         let keywordsHtml = '<span style="color: rgba(255,255,255,0.3);">-</span>';
                                         if (allKeywords.length > 0) {
-                                            const firstKw = allKeywords[0];
+                                            // 특수문자 이스케이핑 함수
+                                            function escapeHtml(str) {
+                                                return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                            }
+                                            const firstKw = escapeHtml(allKeywords[0]);
                                             const remainCount = allKeywords.length - 1;
-                                            const safeTitle = (post.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                                            const safeKeywords = allKeywords.join('|||');
+                                            const safeTitle = escapeHtml(post.title || '');
+                                            const safeKeywords = allKeywords.map(escapeHtml).join('|||');
                                             if (remainCount > 0) {
-                                                keywordsHtml = '<span class="morpheme-preview" data-keywords="' + safeKeywords + '" data-title="' + safeTitle + '" onclick="handleMorphemeClick(this)" style="cursor: pointer; background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;"><span style="color: #fff;">' + firstKw + '</span> <span style="color: #667eea; font-size: 10px;">외 ' + remainCount + '개</span></span>';
+                                                keywordsHtml = '<span class="morpheme-preview" data-keywords="' + safeKeywords + '" data-title="' + safeTitle + '" onclick="handleMorphemeClick(this)" style="cursor:pointer;background:rgba(102,126,234,0.2);padding:3px 8px;border-radius:4px;font-size:11px;"><span style="color:#fff;">' + firstKw + '</span> <span style="color:#667eea;font-size:10px;">외 ' + remainCount + '개</span></span>';
                                             } else {
-                                                keywordsHtml = '<span style="background: rgba(102, 126, 234, 0.2); padding: 3px 8px; border-radius: 4px; font-size: 11px;">' + firstKw + '</span>';
+                                                keywordsHtml = '<span style="background:rgba(102,126,234,0.2);padding:3px 8px;border-radius:4px;font-size:11px;">' + firstKw + '</span>';
                                             }
                                         }
 
@@ -9376,8 +9380,15 @@ def index():
 
         // 형태소 클릭 핸들러
         function handleMorphemeClick(element) {
-            const keywords = element.getAttribute('data-keywords').split('|||');
-            const title = element.getAttribute('data-title');
+            // HTML 엔티티 디코딩
+            function decodeHtml(str) {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = str;
+                return txt.value;
+            }
+            const rawKeywords = element.getAttribute('data-keywords') || '';
+            const keywords = rawKeywords.split('|||').map(decodeHtml);
+            const title = decodeHtml(element.getAttribute('data-title') || '');
             showMorphemePopup(keywords, title);
         }
 
