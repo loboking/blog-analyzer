@@ -3852,6 +3852,25 @@ def index():
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
+        /* 형태소 키워드 링크 */
+        .morpheme-keyword-link {
+            display: inline-block;
+            background: #667eea33;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 4px;
+            border: 1px solid #667eea4d;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .morpheme-keyword-link:hover {
+            background: #667eea66;
+        }
+
         /* 모달 스타일 */
         .modal-overlay {
             display: none;
@@ -6598,7 +6617,7 @@ def index():
                 <button class="trends-refresh-btn" onclick="loadTrendKeywords()">새로고침</button>
             </div>
             <div id="trendsList" class="trends-list">
-                <span style="color: rgba(255,255,255,0.5); font-size: 12px;">로딩 중...</span>
+                <span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>
             </div>
         </div>
 
@@ -7080,30 +7099,30 @@ def index():
 
                     <h3>📊 최적화 점수 체크리스트</h3>
                     <table style="width:100%; border-collapse: collapse; margin: 10px 0;">
-                        <tr style="background: rgba(76,175,80,0.2);">
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">항목</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">기준</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">배점</td>
+                        <tr style="background: #4caf5033;">
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">항목</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">기준</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">배점</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">제목</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">25~45자</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">15점</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">제목</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">25~45자</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">15점</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">이미지</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">6~13개</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">20점</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">이미지</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">6~13개</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">20점</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">본문</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">2,500자+</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">25점</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">본문</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">2,500자+</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">25점</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">소제목</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">4개+</td>
-                            <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.2);">15점</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">소제목</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">4개+</td>
+                            <td style="padding: 8px; border: 1px solid #ffffff33;">15점</td>
                         </tr>
                     </table>
 
@@ -7439,7 +7458,7 @@ def index():
         async function loadTrendKeywords() {
             const container = document.getElementById('trendsList');
             const sourceEl = document.getElementById('trendsSource');
-            container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">로딩 중...</span>';
+            container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">로딩 중...</span>';
             sourceEl.textContent = '';
             sourceEl.className = 'trends-source';
 
@@ -7460,10 +7479,10 @@ def index():
                     sourceEl.textContent = '';
                     sourceEl.style.display = 'none';
                 } else {
-                    container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
+                    container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 키워드를 불러올 수 없습니다.</span>';
                 }
             } catch (error) {
-                container.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">트렌드 로딩 실패</span>';
+                container.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">트렌드 로딩 실패</span>';
             }
         }
 
@@ -7899,7 +7918,7 @@ def index():
             ];
 
             let html = '<div class="compare-result">';
-            html += '<div style="margin-bottom: 12px; font-size: 12px; color: rgba(255,255,255,0.5);">';
+            html += '<div style="margin-bottom: 12px; font-size: 12px; color: #ffffff80;">';
             html += '이전 분석: ' + new Date(previous.date).toLocaleDateString('ko-KR');
             html += ' → 현재: ' + new Date(current.date).toLocaleDateString('ko-KR');
             html += '</div>';
@@ -7949,9 +7968,9 @@ def index():
                     html += '</div>';
 
                     if (data.my_rank) {
-                        html = '<div style="text-align: center; margin-bottom: 16px; padding: 12px; background: rgba(0,200,83,0.1); border-radius: 10px;">🎉 내 블로그가 <strong style="color: #00C853;">' + data.my_rank + '위</strong>에 있습니다!</div>' + html;
+                        html = '<div style="text-align: center; margin-bottom: 16px; padding: 12px; background: #00c8531a; border-radius: 10px;">🎉 내 블로그가 <strong style="color: #00C853;">' + data.my_rank + '위</strong>에 있습니다!</div>' + html;
                     } else {
-                        html = '<div style="text-align: center; margin-bottom: 16px; padding: 12px; background: rgba(255,193,7,0.1); border-radius: 10px;">⚠️ 내 블로그가 상위 5개 결과에 없습니다</div>' + html;
+                        html = '<div style="text-align: center; margin-bottom: 16px; padding: 12px; background: #ffc1071a; border-radius: 10px;">⚠️ 내 블로그가 상위 5개 결과에 없습니다</div>' + html;
                     }
 
                     return html;
@@ -8098,7 +8117,7 @@ def index():
                     `).join('');
                     resultsDiv.classList.add('show');
                 } else {
-                    tagsDiv.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-size: 12px;">연관 키워드를 찾을 수 없습니다.</span>';
+                    tagsDiv.innerHTML = '<span style="color: #ffffff80; font-size: 12px;">연관 키워드를 찾을 수 없습니다.</span>';
                     resultsDiv.classList.add('show');
                 }
             } catch (error) {
@@ -8161,7 +8180,7 @@ def index():
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>블로그 데이터를 분석하고 있습니다...</p>
-                    <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px;">포스팅 지수 분석 중 (약 1분~1분 30초 소요)</p>
+                    <p style="font-size: 12px; color: #ffffff66; margin-top: 8px;">포스팅 지수 분석 중 (약 1분~1분 30초 소요)</p>
                 </div>
             `;
 
@@ -8926,7 +8945,7 @@ def index():
                             font-size: 36px;
                             font-weight: 700;
                             color: white;
-                            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            text-shadow: 0 2px 4px #0000004d;
                         ">${hasProfileImage ? '' : blogInitial}</div>
 
                         <div class="profile-info">
@@ -8952,34 +8971,34 @@ def index():
                     <!-- 통계 그리드 -->
                     <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(102, 126, 234, 0.2);">👁️</div>
+                            <div class="stat-icon" style="background: #667eea33;">👁️</div>
                             <div class="stat-value">${(data.daily_visitors || 0).toLocaleString()}</div>
                             <div class="stat-label">일일 방문자</div>
                             ${weeklyAvg && weeklyAvg.count >= 3 ? `
-                            <div class="stat-sublabel" style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;">
+                            <div class="stat-sublabel" style="font-size: 10px; color: #ffffff80; margin-top: 4px;">
                                 📊 ${weeklyAvg.count}일 평균: ${weeklyAvg.average.toLocaleString()}명
                             </div>` : weeklyAvg && weeklyAvg.count >= 1 ? `
-                            <div class="stat-sublabel" style="font-size: 10px; color: rgba(255, 152, 0, 0.7); margin-top: 4px;">
+                            <div class="stat-sublabel" style="font-size: 10px; color: #ff9800b3; margin-top: 4px;">
                                 ⚠️ ${3 - weeklyAvg.count}일 더 분석 필요
                             </div>` : ''}
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(0, 230, 118, 0.2);">📊</div>
+                            <div class="stat-icon" style="background: #00e67633;">📊</div>
                             <div class="stat-value">${(data.total_visitors || 0).toLocaleString()}</div>
                             <div class="stat-label">전체 방문자</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(240, 147, 251, 0.2);">👥</div>
+                            <div class="stat-icon" style="background: #f093fb33;">👥</div>
                             <div class="stat-value">${(data.neighbors || 0).toLocaleString()}</div>
                             <div class="stat-label">이웃 수</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(255, 193, 7, 0.2);">📝</div>
+                            <div class="stat-icon" style="background: #ffc10733;">📝</div>
                             <div class="stat-value">${(data.total_posts || 0).toLocaleString()}</div>
                             <div class="stat-label">총 포스팅</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: rgba(255, 87, 34, 0.2);">🔥</div>
+                            <div class="stat-icon" style="background: #ff572233;">🔥</div>
                             <div class="stat-value">${data.recent_30days_posts || 0}</div>
                             <div class="stat-label">최근 30일</div>
                         </div>
@@ -8990,19 +9009,19 @@ def index():
                         <h3 class="section-title">🏆 지수 등급 현황</h3>
 
                         ${idx.data_reliability === 'low' ? `
-                        <div style="background: rgba(255, 152, 0, 0.2); border: 1px solid rgba(255, 152, 0, 0.5); border-radius: 8px; padding: 10px 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <div style="background: #ff980033; border: 1px solid #ff980080; border-radius: 8px; padding: 10px 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 18px;">⚠️</span>
                             <div>
                                 <div style="font-size: 13px; font-weight: 600; color: #FFB74D;">분석 데이터 부족</div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6);">정확한 분석을 위해 3일 이상 분석해주세요. 현재는 추정값입니다.</div>
+                                <div style="font-size: 11px; color: #ffffff99;">정확한 분석을 위해 3일 이상 분석해주세요. 현재는 추정값입니다.</div>
                             </div>
                         </div>
                         ` : idx.data_reliability === 'medium' ? `
-                        <div style="background: rgba(102, 126, 234, 0.15); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 11px; color: rgba(255,255,255,0.7);">
+                        <div style="background: #667eea26; border: 1px solid #667eea4d; border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 11px; color: #ffffffb3;">
                             📊 ${idx.reliability_msg}
                         </div>
                         ` : idx.data_reliability === 'high' ? `
-                        <div style="background: rgba(0, 200, 83, 0.15); border: 1px solid rgba(0, 200, 83, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 11px; color: rgba(255,255,255,0.7);">
+                        <div style="background: #00c85326; border: 1px solid #00c8534d; border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 11px; color: #ffffffb3;">
                             ✅ ${idx.reliability_msg}
                         </div>
                         ` : ''}
@@ -9026,7 +9045,7 @@ def index():
                         </div>
 
                         <div class="breakdown-grid" style="grid-template-columns: repeat(4, 1fr);">
-                            <div class="breakdown-item" style="background: rgba(102, 126, 234, 0.15); border: 1px solid rgba(102, 126, 234, 0.3);">
+                            <div class="breakdown-item" style="background: #667eea26; border: 1px solid #667eea4d;">
                                 <div class="breakdown-label">노출 지수</div>
                                 <div class="breakdown-value" style="color: #667eea;">${idx.breakdown?.exposure || 0}</div>
                                 <div class="breakdown-max">/ 100점 (70%)</div>
@@ -9041,7 +9060,7 @@ def index():
                                 <div class="breakdown-value">${idx.breakdown?.trust || 0}</div>
                                 <div class="breakdown-max">/ 100점 (15%)</div>
                             </div>
-                            <div class="breakdown-item" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); border: 1px solid ${idx.color}50;">
+                            <div class="breakdown-item" style="background: linear-gradient(135deg, #667eea33, #764ba233); border: 1px solid ${idx.color}50;">
                                 <div class="breakdown-label">종합</div>
                                 <div class="breakdown-value" style="color: ${idx.color}; font-size: 22px;">${idx.score || 0}</div>
                                 <div class="breakdown-max">/ 100점</div>
@@ -9212,8 +9231,8 @@ def index():
                     <!-- 게시글 진단 섹션 -->
                     ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
                     <div class="section-card">
-                        <h3 class="section-title">📋 게시글 진단 (최근 ${data.posts_with_index.length}개) <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                        <h3 class="section-title">📋 게시글 진단 (최근 ${data.posts_with_index.length}개) <span style="font-size: 12px; color: #ffffff66; font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
+                        <div style="font-size: 11px; color: #ffffff80; margin-bottom: 12px; padding: 8px; background: #ffffff0d; border-radius: 6px;">
                             💡 <strong>진단 결과:</strong> 누락 상태인 글은 네이버 검색에서 제외된 상태입니다. 최적화 점수 70점 이상을 목표로 하세요.
                         </div>
                         <div class="table-scroll-container">
@@ -9274,7 +9293,7 @@ def index():
                                             '<td style="text-align: center;">' + (post.likes || 0) + '</td>' +
                                             '<td style="text-align: center;">' + (post.images || 0) + '</td>' +
                                             '<td style="text-align: center;"><span style="background: ' + scoreColor + '20; color: ' + scoreColor + '; padding: 3px 8px; border-radius: 10px; font-weight: 600; font-size: 11px;">' + score + '점</span></td>' +
-                                            '<td style="text-align: center; color: rgba(255,255,255,0.6); font-size: 11px;">' + dateDisplay + '</td>' +
+                                            '<td style="text-align:center;color:#ffffff99;font-size:11px">' + dateDisplay + '</td>' +
                                             '<td><button class="analyze-btn" data-post-idx="' + idx + '" onclick="handlePostAnalysis(this)">🔍 상세</button></td>' +
                                         '</tr>';
                                     }).join('')}
@@ -9292,33 +9311,33 @@ def index():
 
                     <!-- 형태소 분석 섹션 -->
                     <div class="section-card">
-                        <h3 class="section-title">📝 형태소 분석 <span style="font-size: 12px; color: rgba(255,255,255,0.4); font-weight: normal;">ⓘ 제목에서 자주 사용하는 키워드</span></h3>
+                        <h3 class="section-title">📝 형태소 분석 <span style="font-size: 12px; color: #ffffff66; font-weight: normal;">ⓘ 제목에서 자주 사용하는 키워드</span></h3>
                         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                             <div style="flex: 1; min-width: 200px;">
                                 <table style="width: 100%; border-collapse: collapse;">
                                     <thead>
-                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.7);">형태소</th>
-                                            <th style="text-align: center; padding: 8px; color: rgba(255,255,255,0.7);">빈도수</th>
+                                        <tr style="border-bottom: 1px solid #ffffff1a;">
+                                            <th style="text-align: left; padding: 8px; color: #ffffffb3;">형태소</th>
+                                            <th style="text-align: center; padding: 8px; color: #ffffffb3;">빈도수</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         ${getMorphemeAnalysis(data.posts_with_index).slice(0, 10).map(function(item) {
-                                            return '<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 8px;">' + item.word + '</td><td style="text-align: center; padding: 8px; color: #667eea; font-weight: 600;">' + item.count + '</td></tr>';
+                                            return '<tr style="border-bottom: 1px solid #ffffff0d;"><td style="padding: 8px;">' + item.word + '</td><td style="text-align: center; padding: 8px; color: #667eea; font-weight: 600;">' + item.count + '</td></tr>';
                                         }).join('')}
                                     </tbody>
                                 </table>
                             </div>
                             <div style="flex: 1; min-width: 200px;">
-                                <div style="padding: 12px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 12px;">
-                                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">🏷️ 주요 태그</div>
+                                <div style="padding: 12px; background: #667eea1a; border-radius: 8px; margin-bottom: 12px;">
+                                    <div style="font-size: 11px; color: #ffffff80; margin-bottom: 4px;">🏷️ 주요 태그</div>
                                     <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                         ${getMorphemeAnalysis(data.posts_with_index).slice(0, 6).map(function(item) {
-                                            return '<span style="background: rgba(102, 126, 234, 0.3); padding: 4px 10px; border-radius: 12px; font-size: 12px;">' + item.word + '</span>';
+                                            return '<span style="background: #667eea4d; padding: 4px 10px; border-radius: 12px; font-size: 12px;">' + item.word + '</span>';
                                         }).join('')}
                                     </div>
                                 </div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.5); padding: 8px;">
+                                <div style="font-size: 11px; color: #ffffff80; padding: 8px;">
                                     💡 <strong>팁:</strong> 자주 사용하는 키워드가 블로그 주제와 일치하면 검색 노출에 유리합니다.
                                 </div>
                             </div>
@@ -9344,11 +9363,11 @@ def index():
                     </div>
 
                     <!-- PDF 다운로드 버튼 -->
-                    <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #ffffff1a;">
                         <button class="pdf-download-btn" onclick="downloadPDF()" style="margin: 0 auto;">
                             📄 PDF 리포트 다운로드
                         </button>
-                        <p style="margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.4);">분석 결과를 PDF 파일로 저장합니다</p>
+                        <p style="margin-top: 12px; font-size: 11px; color: #ffffff66;">분석 결과를 PDF 파일로 저장합니다</p>
                     </div>
                 </div>
 
@@ -9409,27 +9428,27 @@ def index():
 
             const overlay = document.createElement('div');
             overlay.className = 'morpheme-popup-overlay';
-            overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000000b3; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
             overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 
             const popup = document.createElement('div');
-            popup.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.5);';
+            popup.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid #ffffff1a; box-shadow: 0 20px 60px #00000080;';
 
             const keywordTags = keywords.map(function(kw) {
                 const naverSearchUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(kw);
-                return '<a href="' + naverSearchUrl + '" target="_blank" style="display: inline-block; background: rgba(102, 126, 234, 0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin: 4px; border: 1px solid rgba(102, 126, 234, 0.3); text-decoration: none; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background=\'rgba(102, 126, 234, 0.4)\'" onmouseout="this.style.background=\'rgba(102, 126, 234, 0.2)\'">' + kw + ' <span style="font-size: 10px; opacity: 0.7;">🔍</span></a>';
+                return '<a href="' + naverSearchUrl + '" target="_blank" class="morpheme-keyword-link">' + kw + ' <span style="font-size:10px;opacity:0.7">🔍</span></a>';
             }).join('');
 
             popup.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h3 style="color: #fff; font-size: 16px; margin: 0;">📝 형태소 분석</h3>
-                    <button onclick="this.closest('.morpheme-popup-overlay').remove()" style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+                    <button onclick="this.closest('.morpheme-popup-overlay').remove()" style="background: none; border: none; color: #ffffff80; font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
                 </div>
-                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                    <div style="color: rgba(255,255,255,0.5); font-size: 11px; margin-bottom: 4px;">제목</div>
+                <div style="background: #ffffff0d; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="color: #ffffff80; font-size: 11px; margin-bottom: 4px;">제목</div>
                     <div style="color: #fff; font-size: 13px; line-height: 1.4;">${title}</div>
                 </div>
-                <div style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 8px;">추출된 키워드 (${keywords.length}개) <span style="color: #667eea;">· 클릭 시 네이버 검색</span></div>
+                <div style="color: #ffffff80; font-size: 12px; margin-bottom: 8px;">추출된 키워드 (${keywords.length}개) <span style="color: #667eea;">· 클릭 시 네이버 검색</span></div>
                 <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     ${keywordTags}
                 </div>
@@ -9607,8 +9626,8 @@ def index():
                 'good': '<span style="color: #7eb8ff;">양호 ✅</span>',
                 'average': '<span style="color: #ffd54f;">보통 ⚠️</span>',
                 'poor': '<span style="color: #e57373;">미흡 ❌</span>',
-                'no_images': '<span style="color: rgba(255,255,255,0.5);">이미지 없음</span>',
-                'unknown': '<span style="color: rgba(255,255,255,0.5);">분석 불가</span>'
+                'no_images': '<span style="color: #ffffff80;">이미지 없음</span>',
+                'unknown': '<span style="color: #ffffff80;">분석 불가</span>'
             };
             return badges[quality] || badges['unknown'];
         }
@@ -9884,22 +9903,22 @@ def index():
             // 팝업 생성
             const popup = document.createElement('div');
             popup.id = 'keywordPopup';
-            popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+            popup.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000b3; display: flex; justify-content: center; align-items: center; z-index: 10000;';
             popup.onclick = function(e) { if (e.target === popup) popup.remove(); };
 
             // 노출 상태 배지
             const exposureBadge = exposure === 'indexed' ?
-                '<span style="background: rgba(76,175,80,0.2); color: #81c784; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">노출중</span>' :
+                '<span style="background: #4caf5033; color: #81c784; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">노출중</span>' :
                 exposure === 'missing' ?
-                '<span style="background: rgba(244,67,54,0.2); color: #e57373; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">누락</span>' :
-                '<span style="background: rgba(255,193,7,0.2); color: #ffd54f; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">확인중</span>';
+                '<span style="background: #f4433633; color: #e57373; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">누락</span>' :
+                '<span style="background: #ffc10733; color: #ffd54f; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 8px;">확인중</span>';
 
             // 팝업 내용
             let keywordsList = keywords.map(function(kw) {
                 const isMainKeyword = mainKeyword && kw.toLowerCase() === mainKeyword.toLowerCase();
                 const badge = isMainKeyword ? exposureBadge : '';
-                const bgColor = isMainKeyword && exposure === 'indexed' ? 'rgba(76,175,80,0.1)' : 'transparent';
-                return '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); background: ' + bgColor + ';">' +
+                const bgColor = isMainKeyword && exposure === 'indexed' ? '#4caf501a' : 'transparent';
+                return '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #ffffff1a; background: ' + bgColor + ';">' +
                     '<span style="font-size: 14px; font-weight: 500;">' + kw + badge + '</span>' +
                     '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(kw) + '" target="_blank" style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">검색 🔍</a>' +
                 '</div>';
@@ -9907,23 +9926,23 @@ def index():
 
             // 메인 키워드가 추출 키워드에 없으면 맨 위에 추가
             if (mainKeyword && !keywords.some(k => k.toLowerCase() === mainKeyword.toLowerCase())) {
-                const bgColor = exposure === 'indexed' ? 'rgba(76,175,80,0.1)' : 'transparent';
-                keywordsList = '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); background: ' + bgColor + ';">' +
+                const bgColor = exposure === 'indexed' ? '#4caf501a' : 'transparent';
+                keywordsList = '<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #ffffff1a; background: ' + bgColor + ';">' +
                     '<span style="font-size: 14px; font-weight: 500;">' + mainKeyword + exposureBadge + '</span>' +
                     '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(mainKeyword) + '" target="_blank" style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">검색 🔍</a>' +
                 '</div>' + keywordsList;
             }
 
-            popup.innerHTML = '<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; width: 90%; max-width: 400px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">' +
-                '<div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
+            popup.innerHTML = '<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; width: 90%; max-width: 400px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px #00000080;">' +
+                '<div style="padding: 20px; border-bottom: 1px solid #ffffff1a;">' +
                     '<div style="display: flex; justify-content: space-between; align-items: center;">' +
                         '<h3 style="margin: 0; font-size: 16px; color: white;">🔍 추출 키워드</h3>' +
-                        '<button onclick="closeKeywordPopup()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer;">&times;</button>' +
+                        '<button onclick="closeKeywordPopup()" style="background: none; border: none; color: #ffffff99; font-size: 24px; cursor: pointer;">&times;</button>' +
                     '</div>' +
-                    '<p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (postTitle || '') + '</p>' +
+                    '<p style="margin: 8px 0 0 0; font-size: 12px; color: #ffffff80; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (postTitle || '') + '</p>' +
                 '</div>' +
                 '<div style="max-height: 400px; overflow-y: auto;">' + keywordsList + '</div>' +
-                '<div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">' +
+                '<div style="padding: 16px; border-top: 1px solid #ffffff1a; text-align: center;">' +
                     '<a href="https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(keywords.join(' ')) + '" target="_blank" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">전체 키워드로 검색</a>' +
                 '</div>' +
             '</div>';
@@ -9949,14 +9968,14 @@ def index():
                                 idx.breakdown?.trust || 0
                             ],
                             backgroundColor: [
-                                'rgba(102, 126, 234, 0.8)',
-                                'rgba(118, 75, 162, 0.8)',
-                                'rgba(0, 230, 118, 0.8)'
+                                '#667eeacc',
+                                '#764ba2cc',
+                                '#00e676cc'
                             ],
                             borderColor: [
-                                'rgba(102, 126, 234, 1)',
-                                'rgba(118, 75, 162, 1)',
-                                'rgba(0, 230, 118, 1)'
+                                '#667eea',
+                                '#764ba2',
+                                '#00e676'
                             ],
                             borderWidth: 2
                         }]
@@ -9968,7 +9987,7 @@ def index():
                             legend: {
                                 position: 'bottom',
                                 labels: {
-                                    color: 'rgba(255,255,255,0.7)',
+                                    color: '#ffffffb3',
                                     font: { size: 11 },
                                     padding: 15
                                 }
@@ -9995,14 +10014,14 @@ def index():
                         datasets: [{
                             data: [exposureCounts.indexed, exposureCounts.missing, exposureCounts.pending],
                             backgroundColor: [
-                                'rgba(76, 175, 80, 0.8)',
-                                'rgba(244, 67, 54, 0.8)',
-                                'rgba(255, 193, 7, 0.8)'
+                                '#4caf50cc',
+                                '#f44336cc',
+                                '#ffc107cc'
                             ],
                             borderColor: [
-                                'rgba(76, 175, 80, 1)',
-                                'rgba(244, 67, 54, 1)',
-                                'rgba(255, 193, 7, 1)'
+                                '#4caf50',
+                                '#f44336',
+                                '#ffc107'
                             ],
                             borderWidth: 2
                         }]
@@ -10014,7 +10033,7 @@ def index():
                             legend: {
                                 position: 'bottom',
                                 labels: {
-                                    color: 'rgba(255,255,255,0.7)',
+                                    color: '#ffffffb3',
                                     font: { size: 11 },
                                     padding: 15
                                 }
@@ -10038,22 +10057,22 @@ def index():
                             {
                                 label: '공감 ♥',
                                 data: posts.map(p => p.likes || 0),
-                                backgroundColor: 'rgba(244, 67, 54, 0.7)',
-                                borderColor: 'rgba(244, 67, 54, 1)',
+                                backgroundColor: '#f44336b3',
+                                borderColor: '#f44336',
                                 borderWidth: 1
                             },
                             {
                                 label: '댓글 💬',
                                 data: posts.map(p => p.comments || 0),
-                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                                borderColor: 'rgba(33, 150, 243, 1)',
+                                backgroundColor: '#2196f3b3',
+                                borderColor: '#2196f3',
                                 borderWidth: 1
                             },
                             {
                                 label: '이미지 🖼',
                                 data: posts.map(p => p.images || 0),
-                                backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                                borderColor: 'rgba(76, 175, 80, 1)',
+                                backgroundColor: '#4caf50b3',
+                                borderColor: '#4caf50',
                                 borderWidth: 1
                             }
                         ]
@@ -10065,7 +10084,7 @@ def index():
                             legend: {
                                 position: 'top',
                                 labels: {
-                                    color: 'rgba(255,255,255,0.7)',
+                                    color: '#ffffffb3',
                                     font: { size: 11 },
                                     padding: 15
                                 }
@@ -10074,15 +10093,15 @@ def index():
                         scales: {
                             x: {
                                 ticks: {
-                                    color: 'rgba(255,255,255,0.5)',
+                                    color: '#ffffff80',
                                     font: { size: 9 },
                                     maxRotation: 45
                                 },
-                                grid: { color: 'rgba(255,255,255,0.05)' }
+                                grid: { color: '#ffffff0d' }
                             },
                             y: {
-                                ticks: { color: 'rgba(255,255,255,0.5)' },
-                                grid: { color: 'rgba(255,255,255,0.05)' }
+                                ticks: { color: '#ffffff80' },
+                                grid: { color: '#ffffff0d' }
                             }
                         }
                     }
