@@ -1675,14 +1675,14 @@ def get_total_stats():
     try:
         # 전체 분석 횟수 조회
         params = {
-            'select': 'id',
+            'select': 'id,blog_id',
             'limit': '10000'
         }
         result = supabase_request('GET', 'blog_history', params=params)
         total_analyses = len(result) if result else 0
 
         # 고유 블로그 수 계산
-        unique_blogs = len(set(item.get('blog_id', '') for item in (result or [])))
+        unique_blogs = len(set(item.get('blog_id', '') for item in (result or []) if item.get('blog_id')))
 
         return jsonify({
             'success': True,
