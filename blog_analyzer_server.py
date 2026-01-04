@@ -8964,17 +8964,20 @@ def index():
             return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        // 개별 포스트 키워드 추출 함수 (개선된 버전)
+        // 개별 포스트 키워드 추출 함수 (개선된 버전 - 단어 조합 지원)
         function getPostKeywords(post, maxKeywords) {
             maxKeywords = maxKeywords || 3;
             const title = (post && post.title) || '';
             if (!title) return [];
 
             // 불용어 (조사, 어미, 접속사 등)
-            const stopwords = ['그리고', '하지만', '그래서', '또한', '그런', '이런', '저런', '어떤', '모든', '같은', '다른', '우리', '나의', '통해', '위해', '대한', '관한', '에서', '으로', '에게', '했다', '한다', '입니다', '합니다', '있다', '없다', '이다', '했습니다', '하기', '되기', '보기', '알아', '해요', '에요', '군요', '네요', '아요', '어요', '구나', '는데', '니다', '습니다', '어서', '니까', '지만', '라서', '려고', '면서', '든지', '거나', '듯이'];
+            const stopwords = ['그리고', '하지만', '그래서', '또한', '그런', '이런', '저런', '어떤', '모든', '같은', '다른', '우리', '나의', '통해', '위해', '대한', '관한', '에서', '으로', '에게', '했다', '한다', '입니다', '합니다', '있다', '없다', '이다', '했습니다', '하기', '되기', '보기', '알아', '해요', '에요', '군요', '네요', '아요', '어요', '구나', '는데', '니다', '습니다', '어서', '니까', '지만', '라서', '려고', '면서', '든지', '거나', '듯이', '정말', '진짜', '너무', '매우', '아주', '완전', '엄청', '겁나', '되게'];
+
+            // 불완전 동사 어간 (제거 대상)
+            const incompleteStems = ['되찾', '했던', '됐던', '봤던', '갔던', '왔던', '먹었', '했을', '됐을', '봤을', '갔을', '왔을', '하려', '되려', '보려', '가려', '오려', '했으', '됐으', '봤으', '갔으', '왔으'];
 
             // 동사/형용사 어미 패턴
-            const verbEndings = ['하는', '되는', '있는', '없는', '나는', '오는', '가는', '보는', '주는', '받는', '하고', '되고', '보고', '나고', '하면', '되면', '보면', '오면', '가면', '해서', '해도', '하게', '하니', '해야', '했던', '됐던', '봤던'];
+            const verbEndings = ['하는', '되는', '있는', '없는', '나는', '오는', '가는', '보는', '주는', '받는', '하고', '되고', '보고', '나고', '하면', '되면', '보면', '오면', '가면', '해서', '해도', '하게', '하니', '해야', '했던', '됐던', '봤던', '하기', '되기', '보기', '가기', '오기'];
 
             // 조사 제거 함수
             function removeParticles(word) {
@@ -8989,16 +8992,36 @@ def index():
                 return result;
             }
 
-            // 한글 1글자 이상 추출 (공백으로 분리 후)
+            // 불완전 어간 체크
+            function isIncompleteStem(word) {
+                return incompleteStems.some(stem => word === stem || word.endsWith(stem));
+            }
+
+            // 공백으로 분리
             const rawWords = title.split(/[\s,.\-_!?~·:;'"()[\]{}/<>]+/).filter(w => w.length > 0);
 
             const uniqueWords = [];
             const seen = {};
+            const cleanedWords = []; // 정제된 단어 목록 (2-gram용)
 
             rawWords.forEach(function(rawWord) {
                 // 한글만 추출
                 const koreanMatch = rawWord.match(/[가-힣]+/g);
-                if (!koreanMatch) return;
+                if (!koreanMatch) {
+                    // 영문 3글자 이상도 추출
+                    const englishMatch = rawWord.match(/[a-zA-Z]{3,}/g);
+                    if (englishMatch) {
+                        englishMatch.forEach(function(word) {
+                            const w = word.toLowerCase();
+                            if (!seen[w]) {
+                                seen[w] = true;
+                                uniqueWords.push(word);
+                                cleanedWords.push(word);
+                            }
+                        });
+                    }
+                    return;
+                }
 
                 koreanMatch.forEach(function(word) {
                     // 동사 어미 체크
@@ -9010,38 +9033,45 @@ def index():
                     // 불용어 체크
                     if (stopwords.includes(cleanWord)) return;
 
-                    // 1글자는 의미있는 단어만 (명사)
-                    if (cleanWord.length === 1) {
-                        const singleCharNouns = ['용', '꿈', '집', '차', '밤', '낮', '봄', '여름', '가을', '겨울', '해', '달', '별', '산', '강', '바다', '숲', '꽃', '풀', '나무', '돈', '일', '말', '글', '책', '영화', '음악', '사진', '그림', '옷', '신발', '가방', '맛', '향', '색', '빛', '소리', '힘', '눈', '코', '입', '귀', '손', '발', '머리', '몸', '마음', '사랑', '행복', '슬픔', '기쁨', '화', '죽음', '삶', '병', '약', '술', '밥', '국', '떡', '과일', '고기', '생선', '새', '개', '고양이', '말', '소', '돼지', '닭', '물고기', '뱀', '호랑이', '사자', '곰', '토끼', '쥐'];
-                        if (!singleCharNouns.includes(cleanWord)) return;
-                    }
+                    // 불완전 어간 체크
+                    if (isIncompleteStem(cleanWord)) return;
+
+                    // 2글자 미만 제외 (1글자 명사 허용 제거 - 더 의미있는 키워드만)
+                    if (cleanWord.length < 2) return;
 
                     const w = cleanWord.toLowerCase();
-                    if (!seen[w] && cleanWord.length >= 1) {
+                    if (!seen[w]) {
                         seen[w] = true;
                         uniqueWords.push(cleanWord);
                     }
+                    cleanedWords.push(cleanWord);
                 });
-
-                // 영문 3글자 이상도 추출
-                const englishMatch = rawWord.match(/[a-zA-Z]{3,}/g);
-                if (englishMatch) {
-                    englishMatch.forEach(function(word) {
-                        const w = word.toLowerCase();
-                        if (!seen[w]) {
-                            seen[w] = true;
-                            uniqueWords.push(word);
-                        }
-                    });
-                }
             });
 
-            // 긴 단어 우선
-            uniqueWords.sort(function(a, b) {
+            // 2-gram 키워드 추출 (연속 2단어 조합)
+            const bigrams = [];
+            for (let i = 0; i < cleanedWords.length - 1; i++) {
+                const w1 = cleanedWords[i];
+                const w2 = cleanedWords[i + 1];
+                // 둘 다 2글자 이상 한글일 때만
+                if (w1.length >= 2 && w2.length >= 2 && /^[가-힣]+$/.test(w1) && /^[가-힣]+$/.test(w2)) {
+                    const bigram = w1 + ' ' + w2;
+                    if (!seen[bigram]) {
+                        seen[bigram] = true;
+                        bigrams.push(bigram);
+                    }
+                }
+            }
+
+            // 2-gram을 앞에 배치 (더 의미있는 키워드)
+            const result = bigrams.concat(uniqueWords);
+
+            // 긴 단어/조합 우선
+            result.sort(function(a, b) {
                 return b.length - a.length;
             });
 
-            return uniqueWords.slice(0, maxKeywords);
+            return result.slice(0, maxKeywords);
         }
 
         // 블로그 코칭 함수들

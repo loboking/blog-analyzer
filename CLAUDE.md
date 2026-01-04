@@ -14,7 +14,7 @@ SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 ## 배포
 
 - **GitHub**: https://github.com/loboking/blog-analyzer
-- **서비스 URL**: https://blogdex.space
+- **서비스 URL**: https://blog-analyzer.onrender.com
 
 ## 데이터베이스 테이블
 
