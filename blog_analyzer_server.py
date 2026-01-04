@@ -25,6 +25,28 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://xmkhsiscudfsqejqtkaf.supabase.co')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
 
+# 분석 결과 캐시 (5분간 유지)
+CACHE = {}
+CACHE_TTL = 300  # 5분
+
+def get_cached(blog_id):
+    """캐시에서 분석 결과 조회"""
+    if blog_id in CACHE:
+        cached_data, cached_time = CACHE[blog_id]
+        if time.time() - cached_time < CACHE_TTL:
+            return cached_data
+        else:
+            del CACHE[blog_id]
+    return None
+
+def set_cache(blog_id, data):
+    """분석 결과를 캐시에 저장"""
+    CACHE[blog_id] = (data, time.time())
+    # 캐시 크기 제한 (최대 100개)
+    if len(CACHE) > 100:
+        oldest_key = min(CACHE.keys(), key=lambda k: CACHE[k][1])
+        del CACHE[oldest_key]
+
 def supabase_request(method, table, data=None, params=None):
     """Supabase REST API 직접 호출"""
     if not SUPABASE_KEY:
@@ -1248,10 +1270,24 @@ def analyze_blog():
     weekly_avg = request.args.get('weekly_avg', type=int, default=0)
     weekly_count = request.args.get('weekly_count', type=int, default=0)
 
+    # 캐시 키 생성 (주간 평균이 다르면 다른 결과)
+    cache_key = f"{blog_id}_{weekly_avg}_{weekly_count}"
+
+    # 캐시 확인
+    cached_result = get_cached(cache_key)
+    if cached_result:
+        cached_result['from_cache'] = True
+        return jsonify(cached_result)
+
     result = naver_crawler.crawl(blog_id, weekly_avg=weekly_avg, weekly_count=weekly_count)
     result['platform'] = 'naver'
     result['weekly_avg_used'] = weekly_avg if weekly_count >= 2 else 0
     result['weekly_count'] = weekly_count
+    result['from_cache'] = False
+
+    # 캐시에 저장 (에러가 없는 경우만)
+    if not result.get('error'):
+        set_cache(cache_key, result)
 
     return jsonify(result)
 
@@ -9936,14 +9972,12 @@ def index():
                         </div>
                     </div>
 
-                    <!-- 결과 중간 광고 (300x250) -->
+                    <!-- 결과 중간 광고 (쿠팡) -->
                     <div class="ad-content-wrapper ad-between-sections">
-                        <div class="ad-content-container">
-                            <div class="ad-label">광고</div>
-                            <ins class="kakao_ad_area" style="display:none;"
-                            data-ad-unit = "DAN-qYU1Nbac9rUaGFpF"
-                            data-ad-width = "300"
-                            data-ad-height = "250"></ins>
+                        <div class="ad-content-container" style="padding: 20px; background: #ffffff08; border-radius: 12px; border: 1px solid #ffffff1a;">
+                            <div style="text-align: center; margin-bottom: 12px; font-size: 11px; color: #ffffff66;">🛒 추천 상품</div>
+                            <iframe id="coupangAdMiddle" style="border:none; width:100%; height:160px; overflow:hidden;"></iframe>
+                            <p style="text-align: center; margin-top: 8px; font-size: 10px; color: #ffffff40;">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
                         </div>
                     </div>
 
@@ -10115,16 +10149,26 @@ def index():
 
             // 쿠팡 파트너스 광고 동적 로드 (iframe 방식)
             setTimeout(() => {
+                const coupangHtml = '<!DOCTYPE html><html><head><style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;min-height:100%;background:transparent;}</style></head>' +
+                    '<body><script src="https://ads-partners.coupang.com/g.js"></' + 'script>' +
+                    '<script>new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});</' + 'script></body></html>';
+
+                // 하단 광고
                 const iframe = document.getElementById('coupangAdFrame');
                 if (iframe) {
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                     iframeDoc.open();
-                    iframeDoc.write(
-                        '<!DOCTYPE html><html><head><style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;min-height:100%;background:transparent;}</style></head>' +
-                        '<body><script src="https://ads-partners.coupang.com/g.js"></' + 'script>' +
-                        '<script>new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});</' + 'script></body></html>'
-                    );
+                    iframeDoc.write(coupangHtml);
                     iframeDoc.close();
+                }
+
+                // 중간 광고
+                const iframeMiddle = document.getElementById('coupangAdMiddle');
+                if (iframeMiddle) {
+                    const iframeDocMiddle = iframeMiddle.contentDocument || iframeMiddle.contentWindow.document;
+                    iframeDocMiddle.open();
+                    iframeDocMiddle.write(coupangHtml);
+                    iframeDocMiddle.close();
                 }
             }, 300);
         }
