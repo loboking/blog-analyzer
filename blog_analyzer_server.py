@@ -47,6 +47,92 @@ def set_cache(blog_id, data):
         oldest_key = min(CACHE.keys(), key=lambda k: CACHE[k][1])
         del CACHE[oldest_key]
 
+# 대기열 관리 시스템
+import threading
+import uuid
+
+class QueueManager:
+    def __init__(self):
+        self.queue = {}  # {request_id: {'position': int, 'status': str, 'blog_id': str, 'created_at': float}}
+        self.processing_count = 0
+        self.lock = threading.Lock()
+        self.max_concurrent = 8  # 동시 처리 가능 수
+        self.avg_process_time = 6  # 평균 처리 시간 (초)
+
+    def add_request(self, blog_id):
+        """새 요청을 대기열에 추가"""
+        request_id = str(uuid.uuid4())[:8]
+        with self.lock:
+            # 대기 중인 요청 수 계산
+            waiting_count = sum(1 for r in self.queue.values() if r['status'] == 'waiting')
+
+            self.queue[request_id] = {
+                'position': waiting_count + 1,
+                'status': 'waiting',
+                'blog_id': blog_id,
+                'created_at': time.time()
+            }
+            self._cleanup_old_requests()
+        return request_id
+
+    def start_processing(self, request_id):
+        """요청 처리 시작"""
+        with self.lock:
+            if request_id in self.queue:
+                self.queue[request_id]['status'] = 'processing'
+                self.processing_count += 1
+                self._update_positions()
+
+    def finish_processing(self, request_id):
+        """요청 처리 완료"""
+        with self.lock:
+            if request_id in self.queue:
+                self.queue[request_id]['status'] = 'completed'
+                self.processing_count = max(0, self.processing_count - 1)
+                self._update_positions()
+
+    def get_status(self, request_id=None):
+        """대기열 상태 조회"""
+        with self.lock:
+            waiting = sum(1 for r in self.queue.values() if r['status'] == 'waiting')
+            processing = sum(1 for r in self.queue.values() if r['status'] == 'processing')
+
+            if request_id and request_id in self.queue:
+                req = self.queue[request_id]
+                position = req['position'] if req['status'] == 'waiting' else 0
+                estimated_time = max(0, (position - self.max_concurrent) * self.avg_process_time // self.max_concurrent + self.avg_process_time) if position > 0 else 0
+                return {
+                    'request_id': request_id,
+                    'status': req['status'],
+                    'position': position,
+                    'waiting_count': waiting,
+                    'processing_count': processing,
+                    'estimated_seconds': estimated_time
+                }
+
+            return {
+                'waiting_count': waiting,
+                'processing_count': processing,
+                'total_in_queue': waiting + processing
+            }
+
+    def _update_positions(self):
+        """대기 순서 재계산"""
+        waiting_requests = [(rid, r) for rid, r in self.queue.items() if r['status'] == 'waiting']
+        waiting_requests.sort(key=lambda x: x[1]['created_at'])
+        for idx, (rid, _) in enumerate(waiting_requests, 1):
+            self.queue[rid]['position'] = idx
+
+    def _cleanup_old_requests(self):
+        """오래된 요청 정리 (5분 이상)"""
+        now = time.time()
+        old_requests = [rid for rid, r in self.queue.items()
+                       if now - r['created_at'] > 300 or r['status'] == 'completed']
+        for rid in old_requests:
+            del self.queue[rid]
+
+queue_manager = QueueManager()
+
 def supabase_request(method, table, data=None, params=None):
     """Supabase REST API 직접 호출"""
     if not SUPABASE_KEY:
@@ -1258,6 +1344,7 @@ naver_crawler = NaverBlogCrawler()
 def analyze_blog():
     """블로그 분석 API - 네이버 블로그 전용"""
     blog_id = request.args.get('blog_id', '').strip()
+    request_id = request.args.get('request_id', '')  # 대기열 요청 ID
 
     if not blog_id:
         return jsonify({'error': '블로그 ID를 입력해주세요.'}), 400
@@ -1277,7 +1364,13 @@ def analyze_blog():
     cached_result = get_cached(cache_key)
     if cached_result:
         cached_result['from_cache'] = True
+        if request_id:
+            queue_manager.finish_processing(request_id)
         return jsonify(cached_result)
+
+    # 대기열 처리 시작 표시
+    if request_id:
+        queue_manager.start_processing(request_id)
 
     result = naver_crawler.crawl(blog_id, weekly_avg=weekly_avg, weekly_count=weekly_count)
     result['platform'] = 'naver'
@@ -1289,6 +1382,10 @@ def analyze_blog():
     if not result.get('error'):
         set_cache(cache_key, result)
 
+    # 대기열 처리 완료 표시
+    if request_id:
+        queue_manager.finish_processing(request_id)
+
     return jsonify(result)
 
 
@@ -1296,6 +1393,52 @@ def analyze_blog():
 def health_check():
     """서버 상태 확인"""
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
+
+
+@app.route('/api/queue/status')
+def get_queue_status():
+    """대기열 상태 조회"""
+    request_id = request.args.get('request_id', '')
+    if request_id:
+        status = queue_manager.get_status(request_id)
+    else:
+        status = queue_manager.get_status()
+    return jsonify(status)
+
+
+@app.route('/api/queue/register', methods=['POST'])
+def register_queue():
+    """대기열에 분석 요청 등록"""
+    data = request.get_json() or {}
+    blog_id = data.get('blog_id', '').strip()
+
+    if not blog_id:
+        return jsonify({'error': '블로그 ID가 필요합니다.'}), 400
+
+    # URL에서 블로그 ID 추출
+    if 'blog.naver.com' in blog_id:
+        blog_id = blog_id.split('blog.naver.com/')[1].split('/')[0].split('?')[0]
+
+    # 캐시 확인 - 캐시에 있으면 대기열 없이 바로 응답
+    weekly_avg = data.get('weekly_avg', 0)
+    weekly_count = data.get('weekly_count', 0)
+    cache_key = f"{blog_id}_{weekly_avg}_{weekly_count}"
+
+    if get_cached(cache_key):
+        return jsonify({
+            'request_id': 'cached',
+            'status': 'cached',
+            'position': 0,
+            'estimated_seconds': 0,
+            'blog_id': blog_id
+        })
+
+    # 대기열에 등록
+    request_id = queue_manager.add_request(blog_id)
+    status = queue_manager.get_status(request_id)
+    status['blog_id'] = blog_id
+
+    return jsonify(status)
 
 
 @app.route('/api/trends')
@@ -8765,38 +8908,137 @@ def index():
 
             // 로딩 표시
             searchBtn.disabled = true;
-            searchBtn.innerHTML = '⏳ 분석 중...';
-            resultDiv.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>블로그 데이터를 분석하고 있습니다...</p>
-                    <p style="font-size: 12px; color: #ffffff66; margin-top: 8px;">포스팅 지수 분석 중 (약 1분~1분 30초 소요)</p>
-                </div>
-            `;
+            searchBtn.innerHTML = '⏳ 대기열 확인 중...';
 
             try {
-                // 주간 평균 계산해서 서버로 전송 (최소 3일 이상 데이터 필요)
+                // 주간 평균 계산
                 const weeklyAvg = getWeeklyAverage(blogId);
-                let url = `/api/analyze?blog_id=${encodeURIComponent(blogId)}`;
-                if (weeklyAvg && weeklyAvg.count >= 3) {
-                    url += `&weekly_avg=${weeklyAvg.average}&weekly_count=${weeklyAvg.count}`;
+                const weeklyParams = weeklyAvg && weeklyAvg.count >= 3
+                    ? { weekly_avg: weeklyAvg.average, weekly_count: weeklyAvg.count }
+                    : { weekly_avg: 0, weekly_count: 0 };
+
+                // 1. 대기열 등록
+                const queueRes = await fetch('/api/queue/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ blog_id: blogId, ...weeklyParams })
+                });
+                const queueData = await queueRes.json();
+
+                // 캐시된 결과면 바로 분석
+                if (queueData.status === 'cached') {
+                    resultDiv.innerHTML = `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>캐시된 결과를 불러오는 중...</p>
+                        </div>
+                    `;
+                } else {
+                    // 대기열 상태 표시
+                    updateQueueStatus(resultDiv, queueData);
+                }
+
+                const requestId = queueData.request_id;
+
+                // 2. 대기열 상태 폴링 (캐시가 아닌 경우)
+                if (queueData.status !== 'cached' && queueData.position > 0) {
+                    await pollQueueStatus(requestId, resultDiv, searchBtn);
+                }
+
+                // 3. 분석 실행
+                searchBtn.innerHTML = '⏳ 분석 중...';
+                resultDiv.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>블로그 데이터를 분석하고 있습니다...</p>
+                        <p style="font-size: 12px; color: #ffffff66; margin-top: 8px;">포스팅 지수 분석 중 (약 5~10초 소요)</p>
+                    </div>
+                `;
+
+                let url = '/api/analyze?blog_id=' + encodeURIComponent(blogId);
+                if (weeklyParams.weekly_count >= 3) {
+                    url += '&weekly_avg=' + weeklyParams.weekly_avg + '&weekly_count=' + weeklyParams.weekly_count;
+                }
+                if (requestId && requestId !== 'cached') {
+                    url += '&request_id=' + requestId;
                 }
 
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 if (data.error) {
-                    resultDiv.innerHTML = `<div class="error">⚠️ ${data.error}</div>`;
+                    resultDiv.innerHTML = '<div class="error">⚠️ ' + data.error + '</div>';
                 } else {
                     displayResult(data);
-                    saveToHistory(data);  // 히스토리에 저장
+                    saveToHistory(data);
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">⚠️ 서버 오류가 발생했습니다: ${error.message}</div>`;
+                resultDiv.innerHTML = '<div class="error">⚠️ 서버 오류가 발생했습니다: ' + error.message + '</div>';
             } finally {
                 searchBtn.disabled = false;
                 searchBtn.innerHTML = '🔍 분석하기';
             }
+        }
+
+        // 대기열 상태 업데이트 UI
+        function updateQueueStatus(resultDiv, queueData) {
+            const position = queueData.position || 0;
+            const waiting = queueData.waiting_count || 0;
+            const estimated = queueData.estimated_seconds || 0;
+
+            resultDiv.innerHTML =
+                '<div class="loading">' +
+                    '<div class="spinner"></div>' +
+                    '<p style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">🕐 대기 중...</p>' +
+                    '<div style="background: #ffffff10; border-radius: 12px; padding: 20px; margin: 16px 0;">' +
+                        '<div style="display: flex; justify-content: space-around; text-align: center;">' +
+                            '<div>' +
+                                '<div style="font-size: 32px; font-weight: 700; color: #667eea;">' + position + '</div>' +
+                                '<div style="font-size: 12px; color: #ffffff80;">내 순서</div>' +
+                            '</div>' +
+                            '<div style="width: 1px; background: #ffffff20;"></div>' +
+                            '<div>' +
+                                '<div style="font-size: 32px; font-weight: 700; color: #f093fb;">' + waiting + '</div>' +
+                                '<div style="font-size: 12px; color: #ffffff80;">전체 대기</div>' +
+                            '</div>' +
+                            '<div style="width: 1px; background: #ffffff20;"></div>' +
+                            '<div>' +
+                                '<div style="font-size: 32px; font-weight: 700; color: #4ade80;">~' + estimated + 's</div>' +
+                                '<div style="font-size: 12px; color: #ffffff80;">예상 시간</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<p style="font-size: 12px; color: #ffffff66;">잠시만 기다려 주세요. 곧 분석이 시작됩니다.</p>' +
+                '</div>';
+        }
+
+        // 대기열 상태 폴링
+        async function pollQueueStatus(requestId, resultDiv, searchBtn) {
+            return new Promise((resolve) => {
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch('/api/queue/status?request_id=' + requestId);
+                        const status = await res.json();
+
+                        if (status.status === 'processing' || status.position === 0 || status.position <= 1) {
+                            clearInterval(pollInterval);
+                            resolve();
+                        } else {
+                            updateQueueStatus(resultDiv, status);
+                            searchBtn.innerHTML = '⏳ 대기 중... (' + status.position + '번째)';
+                        }
+                    } catch (e) {
+                        clearInterval(pollInterval);
+                        resolve();
+                    }
+                }, 1000);
+
+                // 최대 2분 대기
+                setTimeout(() => {
+                    clearInterval(pollInterval);
+                    resolve();
+                }, 120000);
+            });
         }
 
         // 노출 상태 뱃지 생성
