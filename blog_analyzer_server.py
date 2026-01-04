@@ -10119,20 +10119,11 @@ def index():
                 if (iframe) {
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                     iframeDoc.open();
-                    iframeDoc.write(\`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <style>
-                                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100%; background: transparent; }
-                            </style>
-                        </head>
-                        <body>
-                            <script src="https://ads-partners.coupang.com/g.js"><\\/script>
-                            <script>new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});<\\/script>
-                        </body>
-                        </html>
-                    \`);
+                    iframeDoc.write(
+                        '<!DOCTYPE html><html><head><style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;min-height:100%;background:transparent;}</style></head>' +
+                        '<body><script src="https://ads-partners.coupang.com/g.js"></' + 'script>' +
+                        '<script>new PartnersCoupang.G({"id":954672,"template":"carousel","trackingCode":"AF1110518","width":"680","height":"140","tsource":""});</' + 'script></body></html>'
+                    );
                     iframeDoc.close();
                 }
             }, 300);
