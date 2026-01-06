@@ -127,10 +127,10 @@ class NaverBlogCrawler:
             # 6. 지수 계산 (주간 평균 사용)
             result['index'] = self._calculate_index(result, weekly_avg=weekly_avg, weekly_count=weekly_count)
 
-            # 7. 포스팅 지수 정보 (최근 5개)
+            # 7. 포스팅 지수 정보 (최근 10개)
             if result.get('recent_posts'):
                 result['posts_with_index'] = self._get_posts_with_index(
-                    blog_id, result['recent_posts'], max_posts=5
+                    blog_id, result['recent_posts'], max_posts=10
                 )
 
         except Exception as e:
@@ -762,11 +762,11 @@ class NaverBlogCrawler:
             print(f"Search check error: {e}")
             return 'unknown', ''
 
-    def _get_posts_with_index(self, blog_id, posts, max_posts=5):
+    def _get_posts_with_index(self, blog_id, posts, max_posts=10):
         """포스팅 목록에 지수 정보 추가 (병렬 처리) - 개선된 버전"""
         enriched_posts = []
 
-        # 최대 5개 상세 분석 (메모리 최적화)
+        # 최대 10개 상세 분석 (메모리 최적화)
         posts_to_analyze = posts[:max_posts]
 
         def analyze_post(post):
@@ -10014,7 +10014,7 @@ def index():
                     <!-- 게시글 진단 섹션 -->
                     ${(data.posts_with_index && data.posts_with_index.length > 0) ? `
                     <div class="section-card">
-                        <h3 class="section-title">📋 게시글 진단 (최근 ${data.posts_with_index.length}개) <span style="font-size: 12px; color: #ffffff66; font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
+                        <h3 class="section-title">📋 게시글 진단 (<span id="diagnosisCount">5</span>/${data.posts_with_index.length}개) <span style="font-size: 12px; color: #ffffff66; font-weight: normal;">ⓘ 포스팅별 상태 및 최적화 점수</span></h3>
                         <div style="font-size: 11px; color: #ffffff80; margin-bottom: 12px; padding: 8px; background: #ffffff0d; border-radius: 6px;">
                             💡 <strong>진단 결과:</strong> 누락 상태인 글은 네이버 검색에서 제외된 상태입니다. 최적화 점수 70점 이상을 목표로 하세요.
                         </div>
@@ -10068,7 +10068,10 @@ def index():
                                         // 네이버 검색 URL 생성 (제목 전체를 따옴표로 감싸서 검색)
                                         const searchUrl = 'https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent('"' + (post.title || '') + '"');
 
-                                        return '<tr>' +
+                                        // 처음 5개만 표시, 나머지는 숨김
+                                        const hiddenStyle = idx >= 5 ? ' style="display:none;" data-hidden-row="true"' : '';
+
+                                        return '<tr' + hiddenStyle + '>' +
                                             '<td><a href="' + searchUrl + '" target="_blank" class="post-title-link" title="네이버에서 검색: ' + escapedTitle + '">' + escapedTitle + '</a></td>' +
                                             '<td style="text-align: center;">' + missingStatus + '</td>' +
                                             '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
@@ -10083,6 +10086,24 @@ def index():
                                 </tbody>
                             </table>
                         </div>
+                        ${data.posts_with_index.length > 5 ? `
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button id="loadMorePostsBtn" onclick="loadMorePosts()" style="
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                border: none;
+                                color: white;
+                                padding: 12px 30px;
+                                border-radius: 25px;
+                                font-size: 14px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            ">
+                                + 5개 더 보기
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
 
                     <!-- 형태소 분석 섹션 -->
@@ -10665,6 +10686,38 @@ def index():
         // 포스팅 지수 더보기 (5개씩 페이지네이션)
         let diagnosisShowCount = 5;  // 현재 보이는 개수
         const diagnosisPerPage = 5;  // 한 번에 로드할 개수
+
+        function loadMorePosts() {
+            const hiddenRows = document.querySelectorAll('#postsTableBody tr[data-hidden-row="true"]');
+            const allRows = document.querySelectorAll('#postsTableBody tr');
+            const totalPosts = allRows.length;
+            let shown = 0;
+
+            // 숨겨진 행 중 5개 더 보여주기
+            hiddenRows.forEach((row) => {
+                if (shown < 5) {
+                    row.style.display = '';
+                    row.removeAttribute('data-hidden-row');
+                    shown++;
+                }
+            });
+
+            // 카운트 업데이트
+            const visibleCount = document.querySelectorAll('#postsTableBody tr:not([data-hidden-row="true"])').length;
+            const countSpan = document.getElementById('diagnosisCount');
+            if (countSpan) {
+                countSpan.textContent = visibleCount;
+            }
+
+            // 모두 표시되면 버튼 숨기기
+            const remainingHidden = document.querySelectorAll('#postsTableBody tr[data-hidden-row="true"]').length;
+            if (remainingHidden === 0) {
+                const btn = document.getElementById('loadMorePostsBtn');
+                if (btn) {
+                    btn.style.display = 'none';
+                }
+            }
+        }
 
         function toggleMorePosts() {
             const allRows = document.querySelectorAll('#postsTableBody tr');
