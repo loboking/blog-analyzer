@@ -10065,8 +10065,11 @@ def index():
                                         // 제목 이스케이핑
                                         const escapedTitle = (post.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+                                        // 네이버 검색 URL 생성 (제목 전체를 따옴표로 감싸서 검색)
+                                        const searchUrl = 'https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent('"' + (post.title || '') + '"');
+
                                         return '<tr>' +
-                                            '<td><a href="' + (post.link || '#') + '" target="_blank" class="post-title-link" title="' + escapedTitle + '">' + escapedTitle + '</a></td>' +
+                                            '<td><a href="' + searchUrl + '" target="_blank" class="post-title-link" title="네이버에서 검색: ' + escapedTitle + '">' + escapedTitle + '</a></td>' +
                                             '<td style="text-align: center;">' + missingStatus + '</td>' +
                                             '<td style="text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">' + keywordsHtml + '</td>' +
                                             '<td style="text-align: center;">' + (post.comments || 0) + '</td>' +
