@@ -687,7 +687,7 @@ class NaverBlogCrawler:
         return ' '.join(keywords[:4])
 
     def _check_search_exposure(self, blog_id, post_title, post_url):
-        """네이버 검색에서 포스팅 노출 여부 확인 (키워드 기반) - 개선된 버전"""
+        """네이버 검색에서 포스팅 노출 여부 확인 (제목 전체 검색) - 개선된 버전"""
         try:
             # URL에서 실제 블로그 ID와 logNo 추출
             url_blog_id_match = re.search(r'blog\.naver\.com/([a-zA-Z0-9_-]+)', post_url)
@@ -696,24 +696,24 @@ class NaverBlogCrawler:
             log_no_match = re.search(r'/(\d{10,})', post_url) or re.search(r'logNo=(\d+)', post_url)
             log_no = log_no_match.group(1) if log_no_match else ''
 
-            # 제목에서 키워드 추출
-            keyword = self._extract_keyword(post_title)
-            if not keyword:
+            # 제목이 없으면 unknown
+            if not post_title or not post_title.strip():
                 return 'unknown', ''
 
-            # 키워드로 네이버 블로그 검색
-            search_query = urllib.parse.quote(keyword)
+            # 제목 전체를 따옴표로 감싸서 정확한 문구 검색
+            search_title = post_title.strip()
+            search_query = urllib.parse.quote(f'"{search_title}"')
             search_url = f'https://search.naver.com/search.naver?where=blog&query={search_query}'
 
             response = requests.get(search_url, headers=self.headers, timeout=10)
 
             if response.status_code != 200:
-                return 'unknown', keyword
+                return 'unknown', search_title
 
             html = response.text
             soup = BeautifulSoup(html, 'html.parser')
 
-            # ===== 개선된 노출 판단 로직 =====
+            # ===== 제목 전체 검색 기반 노출 판단 =====
             # 검색 결과 항목들을 개별적으로 확인
             search_items = soup.select('.api_txt_lines, .title_link, .total_tit, .sh_blog_title')
 
@@ -725,14 +725,14 @@ class NaverBlogCrawler:
             ]
             for pattern in exact_match_patterns:
                 if re.search(pattern, html, re.IGNORECASE):
-                    return 'indexed', keyword  # 정확한 포스팅이 노출됨
+                    return 'indexed', search_title  # 정확한 포스팅이 노출됨
 
             # 2순위: 검색 결과에서 링크 직접 확인
             all_links = soup.select('a[href*="blog.naver.com"]')
             for link in all_links:
                 href = link.get('href', '')
                 if actual_blog_id in href and log_no in href:
-                    return 'indexed', keyword
+                    return 'indexed', search_title
 
             # 3순위: 제목 유사도 확인 (같은 블로그의 다른 글이 노출된 경우와 구분)
             # 실제 포스팅 제목의 핵심 단어가 검색결과 제목에 포함되어 있는지 확인
@@ -748,15 +748,15 @@ class NaverBlogCrawler:
                         if len(title_keywords) > 0:
                             match_ratio = len(title_keywords & item_keywords) / len(title_keywords)
                             if match_ratio >= 0.5:
-                                return 'indexed', keyword
+                                return 'indexed', search_title
 
             # 4순위: 블로그 ID만 검색결과에 있는 경우
             # 다른 포스팅이 노출된 것일 수 있으므로 'pending'으로 표시
             if actual_blog_id in html:
-                return 'pending', keyword  # 블로그는 검색되나 해당 글인지 불확실
+                return 'pending', search_title  # 블로그는 검색되나 해당 글인지 불확실
 
             # 검색결과에 블로그 ID 자체가 없음
-            return 'missing', keyword
+            return 'missing', search_title
 
         except Exception as e:
             print(f"Search check error: {e}")
