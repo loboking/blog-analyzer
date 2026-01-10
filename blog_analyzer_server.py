@@ -701,7 +701,20 @@ class NaverBlogCrawler:
                 return 'unknown', ''
 
             # 제목 전체를 따옴표로 감싸서 정확한 문구 검색
-            search_title = post_title.strip()
+            # 이모티콘 제거 (네이버 검색에서 누락 방지)
+            emoji_pattern = re.compile("["
+                u"\U0001F600-\U0001F64F"  # emoticons
+                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                u"\U0001F1E0-\U0001F1FF"  # flags
+                u"\U0001F900-\U0001F9FF"  # supplemental symbols
+                u"\U0001FA00-\U0001FAFF"  # extended symbols
+                u"\U00002600-\U000026FF"  # misc symbols
+                u"\U00002700-\U000027BF"  # dingbats
+                u"\U0000FE00-\U0000FE0F"  # variation selectors
+                u"\U0001F000-\U0001F02F"  # mahjong tiles
+                "]+", flags=re.UNICODE)
+            search_title = emoji_pattern.sub('', post_title.strip()).strip()
             search_query = urllib.parse.quote(f'"{search_title}"')
             search_url = f'https://search.naver.com/search.naver?where=blog&query={search_query}'
 
