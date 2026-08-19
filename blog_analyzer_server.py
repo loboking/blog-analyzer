@@ -1014,9 +1014,18 @@ class NaverBlogCrawler:
         return keyword_score
 
     def _crawl_visitor_stats(self, blog_id, result):
-        """방문자 통계 크롤링 (위젯 공개 시)"""
+        """
+        방문자 통계 크롤링 (위젯 공개 시)
+
+        수집에 실패하면 result['visitor_stats_ok']를 False로 남긴다.
+        호출부가 '수집 실패'와 '실제 방문자 0'을 구분할 수 있어야
+        지수 계산 단계에서 값을 지어내지 않는다.
+        """
+        result.setdefault('visitor_stats_ok', False)
+        result.setdefault('visitor_stats_error', None)
+
         try:
-            # 방문자 카운터 API
+            # 방문자 카운터 API (비공식 엔드포인트 - 네이버가 예고 없이 변경/차단할 수 있음)
             visitor_url = f'https://blog.naver.com/NVisitorg498Ajax.naver?blogId={blog_id}'
             response = requests.get(visitor_url, headers=self.headers, timeout=10)
 
@@ -1025,16 +1034,27 @@ class NaverBlogCrawler:
                 today_match = re.search(r'today["\']?\s*:\s*["\']?(\d+)', response.text)
                 if today_match:
                     result['daily_visitors'] = int(today_match.group(1))
+                    result['visitor_stats_ok'] = True
 
                 # 어제 방문자 (yesterday 또는 yester)
                 yesterday_match = re.search(r'(?:yesterday|yester)["\']?\s*:\s*["\']?(\d+)', response.text, re.IGNORECASE)
                 if yesterday_match:
                     result['yesterday_visitors'] = int(yesterday_match.group(1))
+                    result['visitor_stats_ok'] = True
 
                 # 전체 방문자
                 total_match = re.search(r'total["\']?\s*:\s*["\']?(\d+)', response.text)
                 if total_match:
                     result['total_visitors'] = int(total_match.group(1))
+                    result['visitor_stats_ok'] = True
+
+                if not result['visitor_stats_ok']:
+                    # 200이지만 파싱 실패 = 엔드포인트 응답 형식이 바뀌었을 가능성
+                    result['visitor_stats_error'] = 'parse_failed'
+                    print(f"[visitor] parse failed for {blog_id} (endpoint format may have changed)")
+            else:
+                result['visitor_stats_error'] = f'http_{response.status_code}'
+                print(f"[visitor] HTTP {response.status_code} for {blog_id}")
 
             # 방법 2: 블로그 메인 페이지에서 어제 방문자 크롤링
             if result.get('yesterday_visitors', 0) == 0:
@@ -1046,10 +1066,12 @@ class NaverBlogCrawler:
                         yester_match = re.search(r'어제\s*(?:방문자?)?\s*[:：]?\s*(\d[\d,]*)', resp.text)
                         if yester_match:
                             result['yesterday_visitors'] = int(yester_match.group(1).replace(',', ''))
-                except:
-                    pass
+                            result['visitor_stats_ok'] = True
+                except requests.RequestException as e:
+                    print(f"[visitor] fallback page failed for {blog_id}: {e}")
 
-        except Exception as e:
+        except requests.RequestException as e:
+            result['visitor_stats_error'] = 'request_failed'
             print(f"Visitor stats crawl error: {e}")
     
     def _calculate_index(self, data, weekly_avg=0, weekly_count=0):
@@ -1074,61 +1096,46 @@ class NaverBlogCrawler:
         blog_age_days = data.get('blog_age_days', 1)
 
         current_hour = datetime.now().hour
-        visitor_source = 'today'  # 어떤 데이터를 사용했는지 추적
+        visitor_stats_ok = data.get('visitor_stats_ok', False)
 
-        # ★ 최우선: 주간 평균 사용 (3일 이상 데이터가 있을 때)
+        # 어떤 데이터로 방문자 수를 정했는지 추적한다.
+        # 근거 없는 값은 만들지 않는다 - 실측이 없으면 'unavailable'로 남긴다.
+        visitor_source = 'unavailable'
+
+        # ★ 최우선: 주간 평균 사용 (3일 이상 데이터가 있을 때) - 실측
         if weekly_avg > 0 and weekly_count >= 3:
             daily_visitors = weekly_avg
             visitor_source = f'weekly_avg_{weekly_count}days'
-        else:
-            # 주간 평균이 없을 때만 보정 로직 사용
+        elif daily_visitors >= 10:
+            # 오늘 방문자 실측값이 충분히 쌓임
+            visitor_source = 'today'
+        elif yesterday_visitors > 0:
+            # 자정 이후 보정: 어제 '실측값'을 시간대에 맞춰 환산
+            if current_hour < 6:
+                daily_visitors = yesterday_visitors
+                visitor_source = 'yesterday_full'
+            elif current_hour < 12:
+                daily_visitors = max(daily_visitors, int(yesterday_visitors * 0.5))
+                visitor_source = 'yesterday_50pct'
+            else:
+                daily_visitors = max(daily_visitors, int(yesterday_visitors * 0.3))
+                visitor_source = 'yesterday_30pct'
+        elif total_visitors > 0 and blog_age_days > 0:
+            # 누적 방문자 / 블로그 나이 - 산술적 근거는 있으나 정확도 낮음
+            estimated_daily = total_visitors / max(blog_age_days, 1)
+            daily_visitors = max(daily_visitors, int(estimated_daily * 0.7))
+            visitor_source = 'total_estimated'
+        elif visitor_stats_ok and daily_visitors == 0 and total_visitors == 0:
+            # 크롤링은 성공했는데 값이 0 = 실제로 방문자가 없는 블로그
+            visitor_source = 'today'
 
-            # 1순위: 어제 방문자 사용
-            if daily_visitors < 10 and yesterday_visitors > 0:
-                if current_hour < 6:
-                    daily_visitors = yesterday_visitors
-                    visitor_source = 'yesterday_full'
-                elif current_hour < 12:
-                    daily_visitors = max(daily_visitors, int(yesterday_visitors * 0.5))
-                    visitor_source = 'yesterday_50pct'
-                else:
-                    daily_visitors = max(daily_visitors, int(yesterday_visitors * 0.3))
-                    visitor_source = 'yesterday_30pct'
+        # NOTE: 예전에는 여기서 누적 방문자 구간(total_tier)과 이웃 수를 근거로
+        # 일일 방문자를 임의로 지어냈다. 크롤링이 실패해도 그럴듯한 점수가 나와서
+        # '데이터 없음'과 '실측 결과'를 구분할 수 없었기 때문에 제거했다.
 
-            # 2순위: 전체 방문자 기반 추정
-            if daily_visitors < 10 and total_visitors > 0:
-                if blog_age_days > 0:
-                    estimated_daily = total_visitors / max(blog_age_days, 1)
-                    daily_visitors = max(daily_visitors, int(estimated_daily * 0.7))
-                    visitor_source = 'total_estimated'
-                else:
-                    # 전체 방문자 구간별 최소 보정
-                    if total_visitors >= 100000:
-                        daily_visitors = max(daily_visitors, 150)
-                    elif total_visitors >= 50000:
-                        daily_visitors = max(daily_visitors, 100)
-                    elif total_visitors >= 20000:
-                        daily_visitors = max(daily_visitors, 60)
-                    elif total_visitors >= 10000:
-                        daily_visitors = max(daily_visitors, 40)
-                    elif total_visitors >= 5000:
-                        daily_visitors = max(daily_visitors, 25)
-                    elif total_visitors >= 2000:
-                        daily_visitors = max(daily_visitors, 15)
-                    elif total_visitors >= 1000:
-                        daily_visitors = max(daily_visitors, 10)
-                    elif total_visitors >= 500:
-                        daily_visitors = max(daily_visitors, 8)
-                    visitor_source = 'total_tier'
-
-        # 3순위: 이웃 수 기반 최소 보정
-        if daily_visitors < 10:
-            if neighbors >= 500:
-                daily_visitors = max(daily_visitors, 50)
-            elif neighbors >= 100:
-                daily_visitors = max(daily_visitors, 20)
-            elif neighbors >= 30:
-                daily_visitors = max(daily_visitors, 10)
+        # 방문자 실측 근거가 전혀 없으면 지수를 산출하지 않는다.
+        # (방문자 위젯 비공개 블로그를 '저품'으로 낙인찍는 것을 막기 위함)
+        visitor_measurable = visitor_source != 'unavailable'
 
         # 1. 노출 지수 (100점 만점) - 핵심 지표
         # 일일 방문자가 노출의 직접적인 결과
@@ -1227,22 +1234,37 @@ class NaverBlogCrawler:
             level = 'low'
             color = '#F44336'
 
-        # 데이터 신뢰도 판단 (7일 기준, 당일 제외)
-        if weekly_count >= 7:
-            data_reliability = 'high'  # 7일: 높음
+        # 데이터 신뢰도 판단
+        # 방문자 실측 근거(visitor_source)와 누적 관측일수(weekly_count)를 함께 본다.
+        if not visitor_measurable:
+            data_reliability = 'none'
+            reliability_msg = '방문자 데이터를 수집하지 못해 지수를 산출할 수 없습니다 (방문자 위젯 비공개일 수 있음)'
+        elif visitor_source == 'total_estimated':
+            data_reliability = 'low'
+            reliability_msg = '누적 방문자 기반 추정치입니다 (일별 실측 데이터 없음)'
+        elif weekly_count >= 7:
+            data_reliability = 'high'
             reliability_msg = f'{weekly_count}일 평균 데이터 (신뢰도 높음)'
         elif weekly_count >= 3:
-            data_reliability = 'medium'  # 3~6일: 중간
+            data_reliability = 'medium'
             reliability_msg = f'{weekly_count}일 평균 데이터 (신뢰도 보통)'
         else:
-            data_reliability = 'low'  # 3일 미만: 낮음
+            data_reliability = 'low'
             reliability_msg = '분석 데이터 부족 (3일 이상 분석 필요)'
+
+        # 방문자 실측이 없으면 점수/등급을 내보내지 않는다.
+        if not visitor_measurable:
+            grade = '측정 불가'
+            level = 'unknown'
+            color = '#9E9E9E'
+            total_score = None
 
         return {
             'grade': grade,
             'level': level,
-            'score': round(total_score, 2),
+            'score': round(total_score, 2) if total_score is not None else None,
             'color': color,
+            'measurable': visitor_measurable,
             'breakdown': {
                 'exposure': round(exposure_score, 2),
                 'activity': round(activity_score, 2),
@@ -8431,14 +8453,8 @@ def index():
 
                 if (recentEntries.length === 0) return null;
 
-                // 고유한 날짜 수 계산 (하루에 여러번 분석해도 1일로 계산)
-                const uniqueDays = new Set(recentEntries.map(e => {
-                    const d = new Date(e.date);
-                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                }));
-                const dayCount = Math.min(uniqueDays.size, 7);  // 최대 7일
-
                 // 날짜별 최신 데이터만 사용하여 평균 계산
+                // (하루에 여러 번 분석해도 그날의 마지막 기록 1건만 남긴다)
                 const dailyData = {};
                 recentEntries.forEach(e => {
                     const d = new Date(e.date);
@@ -8448,13 +8464,19 @@ def index():
                     }
                 });
 
-                const dailyValues = Object.values(dailyData);
+                // 수집에 실패한 기록(방문자 0)은 평균에서 제외한다.
+                // 포함하면 크롤링 실패가 그대로 '방문자 급감'으로 둔갑해 평균을 끌어내린다.
+                const dailyValues = Object.values(dailyData).filter(e => (e.daily_visitors || 0) > 0);
+
+                if (dailyValues.length === 0) return null;
+
                 const sum = dailyValues.reduce((acc, e) => acc + (e.daily_visitors || 0), 0);
                 const avg = Math.round(sum / dailyValues.length);
 
                 return {
                     average: avg,
-                    count: dayCount,  // 고유 날짜 수 (최대 7, 당일 제외)
+                    // 실제 평균에 반영된 날짜 수만 센다 (수집 실패일 제외)
+                    count: Math.min(dailyValues.length, 7),
                     max: Math.max(...dailyValues.map(e => e.daily_visitors || 0)),
                     min: Math.min(...dailyValues.map(e => e.daily_visitors || 0))
                 };
@@ -9658,8 +9680,8 @@ def index():
                             <div class="index-grade" style="color: ${idx.color}; text-shadow: 0 0 20px ${idx.color}80;">
                                 ${idx.grade || '분석중'}
                             </div>
-                            <div class="index-score">${idx.score || 0} / 100점</div>
-                            ${totalAnalysisCount >= 3000 ? `
+                            <div class="index-score">${idx.measurable === false ? '방문자 데이터 없음' : (idx.score != null ? idx.score + ' / 100점' : '집계중')}</div>
+                            ${idx.measurable !== false && totalAnalysisCount >= 3000 ? `
                             <div class="ranking-badge" style="
                                 margin-top: 8px;
                                 padding: 4px 10px;
@@ -9736,11 +9758,12 @@ def index():
                                         activityLabel = '데이터 수집중';
                                         activityColor = '#ffffff80';
                                     } else if (hour < 6 && today < yesterday * 0.1) {
-                                        // 자정~새벽 6시, 오늘 방문자가 매우 적음 -> 어제 기준
-                                        const estimatedToday = Math.round(yesterday * (1 + (Math.random() * 0.2 - 0.1)));
-                                        activityScore = Math.min(100, Math.round((estimatedToday / Math.max(yesterday, 1)) * 100));
-                                        activityLabel = '예상 (어제 기준)';
-                                        activityColor = '#FFC107';
+                                        // 자정~새벽 6시: 오늘 방문자가 아직 거의 집계되지 않은 시간대.
+                                        // 여기서 활성도를 계산해봐야 근거가 없으므로 숫자를 내지 않는다.
+                                        // (이전에는 Math.random()으로 값을 만들어 새로고침마다 수치가 바뀌었다)
+                                        activityScore = '—';
+                                        activityLabel = '집계 전 (새벽)';
+                                        activityColor = '#ffffff80';
                                     } else {
                                         // 정상 계산
                                         const expectedByHour = yesterday * (hour / 24);
@@ -9765,7 +9788,9 @@ def index():
                                         }
                                     }
 
-                                    return '<div style="font-size: 24px; font-weight: 700; color: ' + activityColor + ';">' + activityScore + (activityScore !== '?' ? '%' : '') + '</div><div style="font-size: 10px; color: ' + activityColor + ';">' + activityLabel + '</div>';
+                                    // 숫자일 때만 '%'를 붙인다 ('?', '—' 같은 placeholder 제외)
+                                    const activitySuffix = (typeof activityScore === 'number') ? '%' : '';
+                                    return '<div style="font-size: 24px; font-weight: 700; color: ' + activityColor + ';">' + activityScore + activitySuffix + '</div><div style="font-size: 10px; color: ' + activityColor + ';">' + activityLabel + '</div>';
                                 })()}
                             </div>
                         </div>
@@ -9806,12 +9831,21 @@ def index():
                     <div class="section-card">
                         <h3 class="section-title">🏆 지수 등급 현황</h3>
 
-                        ${idx.data_reliability === 'low' ? `
+                        ${idx.data_reliability === 'none' ? `
+                        <div style="background: #9e9e9e26; border: 1px solid #9e9e9e66; border-radius: 8px; padding: 10px 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">🚫</span>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; color: #BDBDBD;">지수 산출 불가</div>
+                                <div style="font-size: 11px; color: #ffffff99;">${idx.reliability_msg}</div>
+                                <div style="font-size: 11px; color: #ffffff80; margin-top: 4px;">방문자 위젯이 공개된 블로그만 지수를 산출할 수 있습니다. 아래 활동 지표는 그대로 참고하세요.</div>
+                            </div>
+                        </div>
+                        ` : idx.data_reliability === 'low' ? `
                         <div style="background: #ff980033; border: 1px solid #ff980080; border-radius: 8px; padding: 10px 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 18px;">⚠️</span>
                             <div>
-                                <div style="font-size: 13px; font-weight: 600; color: #FFB74D;">분석 데이터 부족</div>
-                                <div style="font-size: 11px; color: #ffffff99;">정확한 분석을 위해 3일 이상 분석해주세요. 현재는 추정값입니다.</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #FFB74D;">신뢰도 낮음</div>
+                                <div style="font-size: 11px; color: #ffffff99;">${idx.reliability_msg}</div>
                             </div>
                         </div>
                         ` : idx.data_reliability === 'medium' ? `
@@ -9845,8 +9879,8 @@ def index():
                         <div class="breakdown-grid" style="grid-template-columns: repeat(4, 1fr);">
                             <div class="breakdown-item" style="background: #667eea26; border: 1px solid #667eea4d;">
                                 <div class="breakdown-label">노출 지수</div>
-                                <div class="breakdown-value" style="color: #667eea;">${idx.breakdown?.exposure || 0}</div>
-                                <div class="breakdown-max">/ 100점 (70%)</div>
+                                <div class="breakdown-value" style="color: #667eea;">${idx.measurable === false ? '—' : (idx.breakdown?.exposure || 0)}</div>
+                                <div class="breakdown-max">${idx.measurable === false ? '방문자 데이터 필요' : '/ 100점 (70%)'}</div>
                             </div>
                             <div class="breakdown-item">
                                 <div class="breakdown-label">활동 지수</div>
